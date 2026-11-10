@@ -24,8 +24,16 @@
         </div>
       </div>
 
-      <!-- 실시간 통계 & 기록 표시 (정답 수, 평균 해결 시간, 정확도 + 타임어택 남은 시간) -->
-      <div class="stats-bar" aria-label="학습 기록 요약">
+      <!-- 실시간 스테이지 진행도, 점수, 타임어택 남은 시간, 누적 기록 -->
+      <div class="stats-bar" aria-label="스테이지 현황 및 점수">
+        <div class="stat-pill stage-progress-pill" title="현재 스테이지 5문제 중 진행 현황">
+          <span class="stat-label">🚩 스테이지 진행</span>
+          <strong class="stat-value" id="statQuestionProg">문제 1 / 5</strong>
+        </div>
+        <div class="stat-pill current-score-pill" title="현재 누적 점수 (정답 기본 100점 + 스피드 점수, 오답 -10%, 시간초과 -30%)">
+          <span class="stat-label">🪙 현재 점수</span>
+          <strong class="stat-value score-highlight" id="statCurrentScore">0점</strong>
+        </div>
         <div class="stat-pill current-timer time-attack-pill" id="timerPill" title="스테이지 제한 시간 카운트다운">
           <span class="stat-label">⏱️ 남은 시간</span>
           <strong class="stat-value" id="currentTimer">40.0초</strong>
@@ -33,17 +41,9 @@
             <div class="timer-gauge-fill" id="timerGaugeFill" style="width: 100%;"></div>
           </div>
         </div>
-        <div class="stat-pill" title="저장된 누적 정답 수">
-          <span class="stat-label">🏆 정답 수</span>
-          <strong class="stat-value" id="statCorrectCount">0개</strong>
-        </div>
-        <div class="stat-pill" title="정답 문제들의 평균 해결 시간">
-          <span class="stat-label">⚡ 평균 해결 시간</span>
-          <strong class="stat-value" id="statAvgTime">-</strong>
-        </div>
-        <div class="stat-pill" title="정답 제출 정확도">
-          <span class="stat-label">🎯 정확도</span>
-          <strong class="stat-value" id="statAccuracy">-</strong>
+        <div class="stat-pill" title="이번 스테이지 맞힌 문제 수">
+          <span class="stat-label">🎯 정답 수</span>
+          <strong class="stat-value" id="statCorrectCount">0 / 5</strong>
         </div>
       </div>
 
@@ -384,6 +384,13 @@
             <div class="story-rule-item highlight-rule"><span>[규칙3]</span> 양쪽의 균형이 깨지면 해당 조작은 무효다.</div>
             <div class="story-rule-item"><span>[규칙4]</span> 양쪽의 동일한 비율의 설탕을 덜거나 추가할 수 있다.</div>
           </div>
+          <div class="story-score-guide" style="margin-top:12px;background:#fef3c7;border:1.5px dashed #f59e0b;border-radius:12px;padding:12px 14px;font-size:13.5px;color:#92400e;line-height:1.6;">
+            <strong>🏆 스테이지 5문제 챌린지 & 점수 규칙:</strong><br />
+            • 각 스테이지는 <b>총 5문제</b>를 연속으로 배달합니다.<br />
+            • 정답 시 <b>기본 100점</b> + 풀이 시간이 짧을수록 <b>스피드 점수(최대 100점)</b> 추가 획득!<br />
+            • 문제를 틀리면 <b>현재 점수의 10% 감점</b>, 시간 내에 못 풀면 <b>30% 감점</b>됩니다.<br />
+            • 5문제를 모두 배달하고 최고의 최종 점수로 <b>명예의 전당 랭킹</b>에 도전하세요!
+          </div>
         </div>
         <div class="howto-row">
           <div class="howto-step">
@@ -418,34 +425,9 @@
           <!-- JS 렌더링 -->
         </div>
 
-        <!-- 🏆 명예의 전당 랭킹 등록 카드 -->
-        <div class="grade-ranking-box" id="gradeRankingBox">
-          <div class="ranking-box-header">
-            <span class="ranking-box-badge">🏆 명예의 전당 등록</span>
-            <span class="ranking-diff-badge" id="rankSubmitDiffBadge">표준 모드</span>
-          </div>
-          <p class="ranking-box-desc">
-            방금 달성한 해결 시간 <b id="rankSubmitTimeText">0.0초</b>, 조작 <b id="rankSubmitStepsText">0단계</b> 기록을 실시간 랭킹보드에 올려보세요!
-          </p>
-          <form id="rankSubmitForm" class="rank-submit-form" autocomplete="off">
-            <input
-              type="text"
-              id="rankNicknameInput"
-              class="rank-nickname-input"
-              maxlength="10"
-              placeholder="닉네임 입력 (2~10자, 예: 설탕천재)"
-              required
-            />
-            <button type="submit" class="btn btn-primary btn-sm" id="btnSubmitToRanking">
-              🏆 순위 등록하기
-            </button>
-          </form>
-          <div class="rank-submit-result hidden" id="rankSubmitResult">
-            <span id="rankSubmitSuccessMsg"></span>
-            <button type="button" class="btn btn-outline btn-xs" id="btnViewRankAfterSubmit" style="margin-top:4px;">
-              🏆 순위 확인하기
-            </button>
-          </div>
+        <!-- 점수 획득 및 감점 상세 카드 -->
+        <div class="grade-score-card" id="gradeScoreCard">
+          <!-- JS 렌더링: +160점 (기본 100 + 스피드 60) 등 -->
         </div>
 
         <div class="solution-compare-grid">
@@ -539,10 +521,14 @@
         <div class="timeover-answer-hint" id="timeoverAnswerHint">
           <!-- JS 렌더링: 이번 문제 정답 및 식 -->
         </div>
+        <!-- 시간 초과 감점 안내 배너 -->
+        <div class="timeover-penalty-badge" id="timeoverPenaltyBadge">
+          ⚠️ 시간 초과로 <b>현재 점수의 30%가 감점</b>되었습니다!
+        </div>
       </div>
       <div class="modal-footer space-between">
-        <button type="button" class="btn btn-outline" id="btnRetryTimeover">🔄 이 문제 다시 도전</button>
-        <button type="button" class="btn btn-submit" id="btnNextTimeover">🎲 새 문제 도전하기 ➔</button>
+        <button type="button" class="btn btn-outline" data-close-modal="timeoverModal">현재 화면 보기</button>
+        <button type="button" class="btn btn-submit" id="btnNextTimeover">🎲 다음 문제 도전하기 ➔</button>
       </div>
     </div>
   </div>
@@ -555,7 +541,7 @@
           <span class="ranking-trophy-icon">🏆</span>
           <div>
             <h2 id="rankingModalTitle">설탕 배달 명예의 전당</h2>
-            <span class="ranking-sub-desc">등식의 성질 타임어택 실시간 랭킹 (해결 시간 빠른 순)</span>
+            <span class="ranking-sub-desc">등식의 성질 5문제 챌린지 실시간 랭킹 (점수 높은 순)</span>
           </div>
         </div>
         <button type="button" class="modal-close" data-close-modal="rankingModal" aria-label="닫기">✕</button>
@@ -590,11 +576,11 @@
           <table class="ranking-table">
             <thead>
               <tr>
-                <th style="width:60px;">순위</th>
+                <th style="width:55px;">순위</th>
                 <th>닉네임</th>
-                <th>해결 시간</th>
-                <th>조작 단계</th>
-                <th>출제 문제</th>
+                <th>최종 점수</th>
+                <th>정답 수</th>
+                <th>총 시간</th>
                 <th>등록 일시</th>
               </tr>
             </thead>
@@ -613,6 +599,85 @@
       <div class="modal-footer space-between">
         <button type="button" class="btn btn-outline" data-close-modal="rankingModal">닫기</button>
         <button type="button" class="btn btn-primary" id="btnPlayFromRanking">🚀 나도 도전하러 가기!</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- [모달 6] 스테이지 5문제 배달 완주 최종 결과 & 명예의 전당 랭킹 등록 모달 -->
+  <div class="modal-backdrop hidden" id="stageClearModal" role="dialog" aria-modal="true" aria-labelledby="stageClearModalTitle">
+    <div class="modal-box stage-clear-modal-box">
+      <div class="modal-header stage-clear-header">
+        <div class="stage-clear-title-group">
+          <span class="stage-clear-trophy">🎊</span>
+          <div>
+            <h2 id="stageClearModalTitle">스테이지 5문제 배달 완주!</h2>
+            <span class="stage-clear-subtitle">등식의 성질을 활용해 지훈이의 설탕 배달 5문제를 모두 마쳤습니다!</span>
+          </div>
+        </div>
+        <button type="button" class="modal-close" data-close-modal="stageClearModal" aria-label="닫기">✕</button>
+      </div>
+
+      <div class="modal-body">
+        <!-- 최종 획득 점수 하이라이트 배너 -->
+        <div class="stage-score-banner">
+          <div class="score-banner-label">🏆 최종 획득 점수</div>
+          <div class="score-banner-value" id="stageFinalScore">0점</div>
+          <div class="score-banner-sub" id="stageScoreFormula">기본 100점 + 스피드 점수 - 감점 적용</div>
+        </div>
+
+        <!-- 5문제 요약 성적표 -->
+        <div class="stage-summary-grid">
+          <div class="summary-kpi-card">
+            <span class="kpi-label">🎯 맞힌 문제</span>
+            <strong class="kpi-value" id="stageCorrectStats">5 / 5</strong>
+            <small id="stageAccuracyText">정확도 100%</small>
+          </div>
+          <div class="summary-kpi-card">
+            <span class="kpi-label">⏱️ 총 소요 시간</span>
+            <strong class="kpi-value" id="stageTotalTimeText">0.0초</strong>
+            <small id="stageAvgTimeText">문제당 평균 0.0초</small>
+          </div>
+          <div class="summary-kpi-card">
+            <span class="kpi-label">🪜 총 조작 단계</span>
+            <strong class="kpi-value" id="stageTotalStepsText">0단계</strong>
+            <small id="stageDiffBadge">표준 모드</small>
+          </div>
+        </div>
+
+        <!-- 🏆 명예의 전당 랭킹 등록 카드 -->
+        <div class="stage-ranking-submit-card" id="stageRankingCard">
+          <div class="ranking-box-header">
+            <span class="ranking-box-badge">🏆 명예의 전당 실시간 랭킹 등록</span>
+            <span class="ranking-diff-badge" id="stageRankDiffBadge">표준 모드</span>
+          </div>
+          <p class="ranking-box-desc">
+            내가 달성한 최종 점수와 완주 기록을 전 세계 실시간 랭킹보드에 올려 자랑해 보세요!
+          </p>
+          <form id="stageRankSubmitForm" class="rank-submit-form" autocomplete="off">
+            <input
+              type="text"
+              id="stageRankNicknameInput"
+              class="rank-nickname-input"
+              maxlength="10"
+              placeholder="닉네임 입력 (2~10자, 예: 설탕장수1호)"
+              required
+            />
+            <button type="submit" class="btn btn-primary" id="btnSubmitStageScore">
+              🏆 내 순위 등록하기
+            </button>
+          </form>
+          <div class="rank-submit-result hidden" id="stageRankSubmitResult">
+            <span id="stageRankSuccessMsg">🎉 축하합니다! 랭킹 등록이 완료되었습니다!</span>
+            <button type="button" class="btn btn-outline btn-sm" id="btnViewLeaderboardAfterSubmit" style="margin-top:8px;">
+              🏆 명예의 전당 순위표 확인하기
+            </button>
+          </div>
+        </div>
+      </div>
+
+      <div class="modal-footer space-between">
+        <button type="button" class="btn btn-outline" id="btnOpenLeaderboardFromClear">🏆 랭킹보드 전체보기</button>
+        <button type="button" class="btn btn-submit" id="btnRestartStage">🔄 이 스테이지 다시 도전하기 ➔</button>
       </div>
     </div>
   </div>

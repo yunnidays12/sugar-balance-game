@@ -18,30 +18,30 @@
     measurementId: "G-S5426W0FKD",
   };
 
-  const MOCK_STORAGE_KEY = "sugar_merchant_mock_leaderboard_v1";
+  const MOCK_STORAGE_KEY = "sugar_merchant_mock_leaderboard_v2";
 
-  // 기본 샘플 명예의 전당 랭커 데이터 (Firebase 연동 전 데모용)
+  // 기본 샘플 명예의 전당 랭커 데이터 (점수제 기반)
   const DEFAULT_MOCK_DATA = {
     basic: [
-      { id: "m1", nickname: "설탕장수지훈", solveTimeSec: 6.8, stepCount: 2, remainingSec: 23.2, equation: "2x + 3 = 11", ansX: 4, createdAt: Date.now() - 86400000 * 2 },
-      { id: "m2", nickname: "등식의달인", solveTimeSec: 8.5, stepCount: 2, remainingSec: 21.5, equation: "3x + 1 = 13", ansX: 4, createdAt: Date.now() - 86400000 },
-      { id: "m3", nickname: "번개어깨", solveTimeSec: 10.2, stepCount: 3, remainingSec: 19.8, equation: "2x + 4 = 10", ansX: 3, createdAt: Date.now() - 3600000 * 5 },
-      { id: "m4", nickname: "수학꿈나무", solveTimeSec: 14.1, stepCount: 3, remainingSec: 15.9, equation: "3x + 2 = 14", ansX: 4, createdAt: Date.now() - 3600000 * 2 },
-      { id: "m5", nickname: "달콤설탕", solveTimeSec: 18.4, stepCount: 4, remainingSec: 11.6, equation: "4x + 1 = 13", ansX: 3, createdAt: Date.now() - 3600000 },
+      { id: "m1", nickname: "빛의지훈", score: 960, correctCount: 5, totalQuestions: 5, totalSolveTimeSec: 24.5, totalSteps: 10, createdAt: Date.now() - 86400000 * 2 },
+      { id: "m2", nickname: "등식의달인", score: 890, correctCount: 5, totalQuestions: 5, totalSolveTimeSec: 36.2, totalSteps: 11, createdAt: Date.now() - 86400000 },
+      { id: "m3", nickname: "번개어깨", score: 810, correctCount: 4, totalQuestions: 5, totalSolveTimeSec: 42.1, totalSteps: 13, createdAt: Date.now() - 3600000 * 5 },
+      { id: "m4", nickname: "수학꿈나무", score: 720, correctCount: 4, totalQuestions: 5, totalSolveTimeSec: 58.0, totalSteps: 15, createdAt: Date.now() - 3600000 * 2 },
+      { id: "m5", nickname: "달콤설탕", score: 610, correctCount: 3, totalQuestions: 5, totalSolveTimeSec: 65.4, totalSteps: 16, createdAt: Date.now() - 3600000 },
     ],
     standard: [
-      { id: "m6", nickname: "황금저울수호자", solveTimeSec: 11.4, stepCount: 3, remainingSec: 28.6, equation: "3x + 2 = x + 8", ansX: 3, createdAt: Date.now() - 86400000 * 3 },
-      { id: "m7", nickname: "빛의속도", solveTimeSec: 13.8, stepCount: 3, remainingSec: 26.2, equation: "4x + 1 = 2x + 9", ansX: 4, createdAt: Date.now() - 86400000 },
-      { id: "m8", nickname: "방정식마스터", solveTimeSec: 16.5, stepCount: 4, remainingSec: 23.5, equation: "3x + 5 = x + 11", ansX: 3, createdAt: Date.now() - 3600000 * 6 },
-      { id: "m9", nickname: "설탕특공대", solveTimeSec: 21.2, stepCount: 4, remainingSec: 18.8, equation: "5x + 2 = 2x + 14", ansX: 4, createdAt: Date.now() - 3600000 * 3 },
-      { id: "m10", nickname: "균형천재", solveTimeSec: 25.7, stepCount: 5, remainingSec: 14.3, equation: "4x + 3 = x + 15", ansX: 4, createdAt: Date.now() - 1800000 },
+      { id: "m6", nickname: "황금저울수호자", score: 940, correctCount: 5, totalQuestions: 5, totalSolveTimeSec: 42.8, totalSteps: 14, createdAt: Date.now() - 86400000 * 3 },
+      { id: "m7", nickname: "방정식마스터", score: 865, correctCount: 5, totalQuestions: 5, totalSolveTimeSec: 58.4, totalSteps: 15, createdAt: Date.now() - 86400000 },
+      { id: "m8", nickname: "설탕특공대", score: 780, correctCount: 4, totalQuestions: 5, totalSolveTimeSec: 69.2, totalSteps: 18, createdAt: Date.now() - 3600000 * 6 },
+      { id: "m9", nickname: "균형천재", score: 690, correctCount: 4, totalQuestions: 5, totalSolveTimeSec: 85.0, totalSteps: 20, createdAt: Date.now() - 3600000 * 3 },
+      { id: "m10", nickname: "포대계산기", score: 580, correctCount: 3, totalQuestions: 5, totalSolveTimeSec: 92.5, totalSteps: 22, createdAt: Date.now() - 1800000 },
     ],
     challenge: [
-      { id: "m11", nickname: "수학올림피아드", solveTimeSec: 19.3, stepCount: 4, remainingSec: 40.7, equation: "6x + 4 = 2x + 24", ansX: 5, createdAt: Date.now() - 86400000 * 4 },
-      { id: "m12", nickname: "알고리즘신", solveTimeSec: 24.6, stepCount: 4, remainingSec: 35.4, equation: "4x + 6 = 2x + 16", ansX: 5, createdAt: Date.now() - 86400000 * 2 },
-      { id: "m13", nickname: "지게마스터", solveTimeSec: 31.8, stepCount: 5, remainingSec: 28.2, equation: "5x + 3 = x + 23", ansX: 5, createdAt: Date.now() - 3600000 * 8 },
-      { id: "m14", nickname: "설탕장인", solveTimeSec: 38.5, stepCount: 6, remainingSec: 21.5, equation: "6x + 3 = 3x + 18", ansX: 5, createdAt: Date.now() - 3600000 * 4 },
-      { id: "m15", nickname: "포대계산기", solveTimeSec: 46.2, stepCount: 6, remainingSec: 13.8, equation: "5x + 4 = 2x + 19", ansX: 5, createdAt: Date.now() - 1200000 },
+      { id: "m11", nickname: "수학올림피아드", score: 920, correctCount: 5, totalQuestions: 5, totalSolveTimeSec: 78.5, totalSteps: 18, createdAt: Date.now() - 86400000 * 4 },
+      { id: "m12", nickname: "알고리즘신", score: 840, correctCount: 5, totalQuestions: 5, totalSolveTimeSec: 96.0, totalSteps: 21, createdAt: Date.now() - 86400000 * 2 },
+      { id: "m13", nickname: "지게마스터", score: 750, correctCount: 4, totalQuestions: 5, totalSolveTimeSec: 112.4, totalSteps: 24, createdAt: Date.now() - 3600000 * 8 },
+      { id: "m14", nickname: "설탕장인", score: 640, correctCount: 4, totalQuestions: 5, totalSolveTimeSec: 135.0, totalSteps: 27, createdAt: Date.now() - 3600000 * 4 },
+      { id: "m15", nickname: "방정식탐험가", score: 510, correctCount: 3, totalQuestions: 5, totalSolveTimeSec: 150.2, totalSteps: 29, createdAt: Date.now() - 1200000 },
     ],
   };
 
@@ -120,21 +120,24 @@
             list.push({
               id: doc.id,
               nickname: data.nickname || "익명",
-              solveTimeSec: Number(data.solveTimeSec) || 0,
-              stepCount: Number(data.stepCount) || 0,
-              remainingSec: Number(data.remainingSec) || 0,
-              equation: data.equation || "",
-              ansX: Number(data.ansX) || 0,
+              score: Math.max(0, Math.round(Number(data.score) || 0)),
+              correctCount: Number(data.correctCount ?? 5),
+              totalQuestions: Number(data.totalQuestions ?? 5),
+              totalSolveTimeSec: Number(data.totalSolveTimeSec ?? data.solveTimeSec ?? 0),
+              totalSteps: Number(data.totalSteps ?? data.stepCount ?? 0),
               createdAt: data.createdAt ? (data.createdAt.toMillis ? data.createdAt.toMillis() : data.createdAt) : Date.now(),
             });
           });
 
-          // 1순위: 해결 시간 빠른 순, 2순위: 조작 단계 적은 순으로 정렬 후 상위 20개 반환
+          // 1순위: 최종 점수 높은 순, 2순위: 총 소요 시간 빠른 순, 3순위: 조작 단계 적은 순
           list.sort((a, b) => {
-            if (a.solveTimeSec !== b.solveTimeSec) {
-              return a.solveTimeSec - b.solveTimeSec;
+            if (b.score !== a.score) {
+              return b.score - a.score;
             }
-            return a.stepCount - b.stepCount;
+            if (a.totalSolveTimeSec !== b.totalSolveTimeSec) {
+              return a.totalSolveTimeSec - b.totalSolveTimeSec;
+            }
+            return a.totalSteps - b.totalSteps;
           });
 
           return list.slice(0, 20);
@@ -148,10 +151,13 @@
       const mock = loadLocalMockLeaderboard();
       const list = mock[difficulty] || [];
       return [...list].sort((a, b) => {
-        if (a.solveTimeSec !== b.solveTimeSec) {
-          return a.solveTimeSec - b.solveTimeSec; // 1순위: 해결 시간 빠른 순
+        if (b.score !== a.score) {
+          return b.score - a.score;
         }
-        return a.stepCount - b.stepCount; // 2순위: 조작 단계 적은 순
+        if (a.totalSolveTimeSec !== b.totalSolveTimeSec) {
+          return a.totalSolveTimeSec - b.totalSolveTimeSec;
+        }
+        return a.totalSteps - b.totalSteps;
       });
     },
 
@@ -160,11 +166,11 @@
       const sanitized = {
         nickname: String(entry.nickname || "설탕장수").trim().slice(0, 12),
         difficulty: entry.difficulty || "standard",
-        solveTimeSec: Number(Number(entry.solveTimeSec).toFixed(1)),
-        stepCount: Number(entry.stepCount) || 1,
-        remainingSec: Number(Number(entry.remainingSec).toFixed(1)),
-        equation: String(entry.equation || ""),
-        ansX: Number(entry.ansX) || 1,
+        score: Math.max(0, Math.round(Number(entry.score) || 0)),
+        correctCount: Math.min(5, Math.max(0, Number(entry.correctCount) || 0)),
+        totalQuestions: 5,
+        totalSolveTimeSec: Number(Number(entry.totalSolveTimeSec || entry.solveTimeSec || 0).toFixed(1)),
+        totalSteps: Number(entry.totalSteps || entry.stepCount || 1),
         createdAt: Date.now(),
       };
 
@@ -194,10 +200,13 @@
 
       // 정렬 후 상위 30개만 유지
       mock[sanitized.difficulty].sort((a, b) => {
-        if (a.solveTimeSec !== b.solveTimeSec) {
-          return a.solveTimeSec - b.solveTimeSec;
+        if (b.score !== a.score) {
+          return b.score - a.score;
         }
-        return a.stepCount - b.stepCount;
+        if (a.totalSolveTimeSec !== b.totalSolveTimeSec) {
+          return a.totalSolveTimeSec - b.totalSolveTimeSec;
+        }
+        return a.totalSteps - b.totalSteps;
       });
       if (mock[sanitized.difficulty].length > 30) {
         mock[sanitized.difficulty].length = 30;

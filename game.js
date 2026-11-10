@@ -179,12 +179,24 @@
     }
   }
 
+  // 각 스테이지 당 총 문제 수 (5문제 챌린지)
+  const STAGE_TOTAL_QUESTIONS = 5;
+
   // =========================
   // 게임 상태
   // =========================
   const state = {
     difficulty: "standard", // 'basic' | 'standard' | 'challenge'
     lastEquationKey: "",
+
+    // 스테이지 5문제 진행 상태 & 점수 관리
+    stageQuestionIndex: 1, // 1 ~ 5
+    currentScore: 0,       // 현재 누적 점수
+    stageCorrectCount: 0,  // 이번 스테이지 5문제 중 정답 맞힌 개수
+    stageTotalSolveTimeSec: 0, // 이번 스테이지 5문제 총 소요 시간
+    stageTotalSteps: 0,    // 이번 스테이지 5문제 총 조작 단계
+    lastRoundResult: null, // 이번 문제 채점/타임오버 상세 결과
+    lastCompletedStageEntry: null, // 5문제 완주 시 랭킹 등록용 최종 기록
 
     problem: {
       initA: 3,
@@ -226,9 +238,9 @@
     currentTimer: document.getElementById("currentTimer"),
     timerPill: document.getElementById("timerPill"),
     timerGaugeFill: document.getElementById("timerGaugeFill"),
+    statQuestionProg: document.getElementById("statQuestionProg"),
+    statCurrentScore: document.getElementById("statCurrentScore"),
     statCorrectCount: document.getElementById("statCorrectCount"),
-    statAvgTime: document.getElementById("statAvgTime"),
-    statAccuracy: document.getElementById("statAccuracy"),
 
     btnOpenMission: document.getElementById("btnOpenMission"),
     btnStartMission: document.getElementById("btnStartMission"),
@@ -295,7 +307,7 @@
     timeoverModal: document.getElementById("timeoverModal"),
     timeoverSubText: document.getElementById("timeoverSubText"),
     timeoverAnswerHint: document.getElementById("timeoverAnswerHint"),
-    btnRetryTimeover: document.getElementById("btnRetryTimeover"),
+    timeoverPenaltyBadge: document.getElementById("timeoverPenaltyBadge"),
     btnNextTimeover: document.getElementById("btnNextTimeover"),
 
     // 🏆 랭킹보드 모달 및 관련 요소
@@ -307,23 +319,34 @@
     rankingTableBody: document.getElementById("rankingTableBody"),
     btnPlayFromRanking: document.getElementById("btnPlayFromRanking"),
 
-    // 🏆 정답 모달 내 랭킹 등록 요소
-    gradeRankingBox: document.getElementById("gradeRankingBox"),
-    rankSubmitDiffBadge: document.getElementById("rankSubmitDiffBadge"),
-    rankSubmitTimeText: document.getElementById("rankSubmitTimeText"),
-    rankSubmitStepsText: document.getElementById("rankSubmitStepsText"),
-    rankSubmitForm: document.getElementById("rankSubmitForm"),
-    rankNicknameInput: document.getElementById("rankNicknameInput"),
-    btnSubmitToRanking: document.getElementById("btnSubmitToRanking"),
-    rankSubmitResult: document.getElementById("rankSubmitResult"),
-    rankSubmitSuccessMsg: document.getElementById("rankSubmitSuccessMsg"),
-    btnViewRankAfterSubmit: document.getElementById("btnViewRankAfterSubmit"),
-    btnOpenRankingFromGrading: document.getElementById("btnOpenRankingFromGrading"),
-
+    // 채점 모달 내 요소
     gradeHeroBox: document.getElementById("gradeHeroBox"),
+    gradeScoreCard: document.getElementById("gradeScoreCard"),
     myGradeSteps: document.getElementById("myGradeSteps"),
     modelGradeSteps: document.getElementById("modelGradeSteps"),
     btnNextProblemModal: document.getElementById("btnNextProblemModal"),
+    btnOpenRankingFromGrading: document.getElementById("btnOpenRankingFromGrading"),
+
+    // 🏆 [신규] 스테이지 5문제 완주 최종 결과 모달
+    stageClearModal: document.getElementById("stageClearModal"),
+    stageFinalScore: document.getElementById("stageFinalScore"),
+    stageScoreFormula: document.getElementById("stageScoreFormula"),
+    stageCorrectStats: document.getElementById("stageCorrectStats"),
+    stageAccuracyText: document.getElementById("stageAccuracyText"),
+    stageTotalTimeText: document.getElementById("stageTotalTimeText"),
+    stageAvgTimeText: document.getElementById("stageAvgTimeText"),
+    stageTotalStepsText: document.getElementById("stageTotalStepsText"),
+    stageDiffBadge: document.getElementById("stageDiffBadge"),
+    stageRankingCard: document.getElementById("stageRankingCard"),
+    stageRankDiffBadge: document.getElementById("stageRankDiffBadge"),
+    stageRankSubmitForm: document.getElementById("stageRankSubmitForm"),
+    stageRankNicknameInput: document.getElementById("stageRankNicknameInput"),
+    btnSubmitStageScore: document.getElementById("btnSubmitStageScore"),
+    stageRankSubmitResult: document.getElementById("stageRankSubmitResult"),
+    stageRankSuccessMsg: document.getElementById("stageRankSuccessMsg"),
+    btnViewLeaderboardAfterSubmit: document.getElementById("btnViewLeaderboardAfterSubmit"),
+    btnOpenLeaderboardFromClear: document.getElementById("btnOpenLeaderboardFromClear"),
+    btnRestartStage: document.getElementById("btnRestartStage"),
 
     modalCorrectCount: document.getElementById("modalCorrectCount"),
     modalAttemptSub: document.getElementById("modalAttemptSub"),
@@ -513,10 +536,24 @@
     if (state.timerInterval) clearInterval(state.timerInterval);
     state.isTimeOver = true;
     state.remainingSec = 0;
+    state.elapsedSec = state.totalTimeSec;
+    state.stageTotalSolveTimeSec += state.totalTimeSec;
     updateTimerDisplay();
 
     sfx.timeover();
     el.answerInput.disabled = true;
+
+    // 시간 내에 못 풀면 현재 점수의 30% 감점!
+    const penalty = Math.round(state.currentScore * 0.3);
+    const beforeScore = state.currentScore;
+    state.currentScore = Math.max(0, beforeScore - penalty);
+
+    if (el.statCurrentScore) {
+      el.statCurrentScore.classList.remove("pulse-gain", "pulse-loss");
+      void el.statCurrentScore.offsetWidth;
+      el.statCurrentScore.classList.add("pulse-loss");
+    }
+    renderStats();
 
     // 타임오버 모달 안내 채우기
     const initEq = formatEquation({
@@ -527,18 +564,34 @@
     });
 
     const diffNames = {
-      basic: "기초 단계 (30초 타임어택)",
-      standard: "표준 단계 (40초 타임어택)",
-      challenge: "심화 단계 (1분 타임어택)",
+      basic: "기초 단계 (30초)",
+      standard: "표준 단계 (40초)",
+      challenge: "심화 단계 (1분)",
     };
 
-    el.timeoverSubText.textContent = `${diffNames[state.difficulty] || "타임어택"}의 제한 시간이 모두 지났습니다!`;
+    el.timeoverSubText.textContent = `${diffNames[state.difficulty] || "타임어택"}의 제한 시간(${state.totalTimeSec}초)이 모두 지났습니다!`;
     el.timeoverAnswerHint.innerHTML = `
       <div>출제 방정식: <strong>${initEq}</strong></div>
       <div style="margin-top:6px;color:#991b1b;font-weight:800;font-size:15px;">
         💡 이번 설탕 포대 1개(<span class="math-var">x</span>)의 정답은 <strong>${state.problem.x} kg</strong>이었습니다!
       </div>
     `;
+
+    if (el.timeoverPenaltyBadge) {
+      el.timeoverPenaltyBadge.innerHTML = `
+        ⚠️ 시간 초과로 <b>현재 점수의 30% 감점(-${penalty}점)</b> 되었습니다!<br />
+        <span style="font-size:12.5px;color:#b91c1c;margin-top:2px;display:inline-block;">(이전 ${beforeScore}점 ➔ 현재 ${state.currentScore}점)</span>
+      `;
+    }
+
+    // 5문제째면 버튼 텍스트 변경
+    if (el.btnNextTimeover) {
+      if (state.stageQuestionIndex >= STAGE_TOTAL_QUESTIONS) {
+        el.btnNextTimeover.textContent = "🏆 스테이지 최종 결과 확인하기 ➔";
+      } else {
+        el.btnNextTimeover.textContent = `🎲 다음 문제 (${state.stageQuestionIndex + 1}/${STAGE_TOTAL_QUESTIONS}) 도전하기 ➔`;
+      }
+    }
 
     openModal("timeoverModal");
   }
@@ -884,36 +937,71 @@
     }
 
     state.records.totalSubmissions += 1;
+    if (state.timerInterval) clearInterval(state.timerInterval);
+    state.elapsedSec = Math.max(0.1, state.totalTimeSec - state.remainingSec);
+    state.stageTotalSolveTimeSec += state.elapsedSec;
+
+    const validStepCount = state.steps.filter((s) => !s.isInvalidLog).length;
+    state.stageTotalSteps += validStepCount;
+    state.isSolved = true;
+    el.answerInput.disabled = true;
 
     if (userX !== state.problem.x) {
-      // 오답 처리
+      // ❌ 오답 처리: 현재 점수의 10% 감점!
       sfx.wrong();
-      saveRecords(state.records);
-      renderStats();
+      const penalty = Math.round(state.currentScore * 0.1);
+      const beforeScore = state.currentScore;
+      state.currentScore = Math.max(0, beforeScore - penalty);
 
-      const leftTest = state.problem.initA * userX + state.problem.initB;
-      const rightTest = state.problem.initC * userX + state.problem.initD;
-      showInlineFeedback(
-        `아쉬워요! x = ${userX}kg이면 처음 왼쪽은 ${leftTest}kg, 오른쪽은 ${rightTest}kg이 되어 균형이 맞지 않아요. 저울을 조작해 다시 확인해 볼까요?`
-      );
-      el.answerInput.select();
+      if (el.statCurrentScore) {
+        el.statCurrentScore.classList.remove("pulse-gain", "pulse-loss");
+        void el.statCurrentScore.offsetWidth;
+        el.statCurrentScore.classList.add("pulse-loss");
+      }
+
+      state.records.history.unshift({
+        eq: formatEquation({
+          a: state.problem.initA,
+          b: state.problem.initB,
+          c: state.problem.initC,
+          d: state.problem.initD,
+        }),
+        x: state.problem.x,
+        timeSec: Number(state.elapsedSec.toFixed(1)),
+        steps: validStepCount,
+        isolated: false,
+        isCorrect: false,
+      });
+      if (state.records.history.length > 30) state.records.history.length = 30;
+      saveRecords(state.records);
+      renderAll();
+
+      openGradingModal(validStepCount, false, false, userX, penalty, beforeScore);
       return;
     }
 
-    // 정답 처리!
+    // 🎉 정답 처리! 기본 100점 + 스피드 점수(남은 시간에 비례, 최대 100점)
     hideInlineFeedback();
-    state.isSolved = true;
-    if (state.timerInterval) clearInterval(state.timerInterval);
-    state.elapsedSec = Math.max(0.1, state.totalTimeSec - state.remainingSec);
-    el.answerInput.disabled = true;
-
-    const validStepCount = state.steps.filter((s) => !s.isInvalidLog).length;
     const isolatedOnScale = isXIsolated(state.current);
-
+    state.stageCorrectCount += 1;
     state.records.correctCount += 1;
     state.records.totalSolveTimeSec += state.elapsedSec;
     if (state.records.bestTimeSec === null || state.elapsedSec < state.records.bestTimeSec) {
       state.records.bestTimeSec = state.elapsedSec;
+    }
+
+    const baseScore = 100;
+    const limit = STAGE_LIMITS[state.difficulty] || 40;
+    const speedRatio = Math.max(0, Math.min(1, state.remainingSec / limit));
+    const speedBonus = Math.round(speedRatio * 100);
+    const totalEarned = baseScore + speedBonus;
+    const beforeScore = state.currentScore;
+    state.currentScore += totalEarned;
+
+    if (el.statCurrentScore) {
+      el.statCurrentScore.classList.remove("pulse-gain", "pulse-loss");
+      void el.statCurrentScore.offsetWidth;
+      el.statCurrentScore.classList.add("pulse-gain");
     }
 
     state.records.history.unshift({
@@ -927,15 +1015,14 @@
       timeSec: Number(state.elapsedSec.toFixed(1)),
       steps: validStepCount,
       isolated: isolatedOnScale,
+      isCorrect: true,
     });
-    if (state.records.history.length > 30) {
-      state.records.history.length = 30;
-    }
-
+    if (state.records.history.length > 30) state.records.history.length = 30;
     saveRecords(state.records);
+
     sfx.correct();
     renderAll();
-    openGradingModal(validStepCount, isolatedOnScale);
+    openGradingModal(validStepCount, isolatedOnScale, true, userX, totalEarned, beforeScore, speedBonus);
   }
 
   function isXIsolated(st) {
@@ -945,37 +1032,90 @@
     );
   }
 
-  function openGradingModal(validStepCount, isolatedOnScale) {
+  function openGradingModal(validStepCount, isolatedOnScale, isCorrect, userX, scoreDelta, beforeScore, speedBonus = 0) {
     const { initA, initB, initC, initD, x } = state.problem;
     const initTotalKg = initA * x + initB;
 
-    const badgeNote = isolatedOnScale
-      ? "🌟 저울의 균형을 끝까지 유지해 포대 1개의 무게를 완벽히 분리해 냈어요!"
-      : "💡 정답입니다! 오른쪽의 등식의 성질 표준 풀이와도 과정을 비교해 보세요.";
+    if (isCorrect) {
+      const badgeNote = isolatedOnScale
+        ? "🌟 저울의 균형을 끝까지 유지해 포대 1개의 무게를 완벽히 분리해 냈어요!"
+        : "💡 정답입니다! 오른쪽의 등식의 성질 표준 풀이와도 과정을 비교해 보세요.";
 
-    el.gradeHeroBox.innerHTML = `
-      <div class="grade-hero-main">
-        <h3>정답입니다! 설탕 포대 1개(x) = ${x} kg 🎊</h3>
-        <p>${badgeNote}</p>
-        <p style="margin-top:4px;font-size:12.5px;color:#065f46;">
-          검산: 처음 왼쪽 어깨 <b>${initTotalKg}kg</b> = 처음 오른쪽 어깨 <b>${initC * x + initD}kg</b> (완벽한 균형!)
-        </p>
-      </div>
-      <div class="grade-metrics">
-        <div class="grade-metric-box">
-          <span>해결 시간</span>
-          <strong>${state.elapsedSec.toFixed(1)}초</strong>
+      el.gradeHeroBox.innerHTML = `
+        <div class="grade-hero-main">
+          <h3>🎉 정답입니다! 설탕 포대 1개(x) = ${x} kg</h3>
+          <p>${badgeNote}</p>
+          <p style="margin-top:4px;font-size:12.5px;color:#065f46;">
+            검산: 처음 왼쪽 어깨 <b>${initTotalKg}kg</b> = 처음 오른쪽 어깨 <b>${initC * x + initD}kg</b> (완벽한 균형!)
+          </p>
         </div>
-        <div class="grade-metric-box">
-          <span>남은 시간</span>
-          <strong style="color:#059669;">${state.remainingSec.toFixed(1)}초</strong>
+        <div class="grade-metrics">
+          <div class="grade-metric-box">
+            <span>해결 시간</span>
+            <strong>${state.elapsedSec.toFixed(1)}초</strong>
+          </div>
+          <div class="grade-metric-box">
+            <span>남은 시간</span>
+            <strong style="color:#059669;">${state.remainingSec.toFixed(1)}초</strong>
+          </div>
+          <div class="grade-metric-box">
+            <span>조작 단계</span>
+            <strong>${validStepCount}단계</strong>
+          </div>
         </div>
-        <div class="grade-metric-box">
-          <span>조작 단계</span>
-          <strong>${validStepCount}단계</strong>
+      `;
+
+      if (el.gradeScoreCard) {
+        el.gradeScoreCard.className = "grade-score-card gain";
+        el.gradeScoreCard.innerHTML = `
+          <div class="score-card-main">
+            <span class="score-card-title">🎉 +${scoreDelta}점 획득!</span>
+            <span class="score-card-breakdown">기본 점수 100점 + 스피드 점수 ${speedBonus}점 (남은 시간 ${state.remainingSec.toFixed(1)}초 반영)</span>
+          </div>
+          <div class="score-card-total-box">
+            <span>현재 누적 점수</span>
+            <strong>${state.currentScore}점</strong>
+          </div>
+        `;
+      }
+    } else {
+      el.gradeHeroBox.innerHTML = `
+        <div class="grade-hero-main wrong-hero">
+          <h3 style="color:#b91c1c;">❌ 아쉬워요! 오답입니다. (입력: ${userX}kg ➔ 정답: x = ${x}kg)</h3>
+          <p style="color:#991b1b;margin-top:4px;font-size:13px;">
+            x = ${userX}kg이면 처음 왼쪽은 ${initA * userX + initB}kg, 오른쪽은 ${initC * userX + initD}kg이 되어 균형이 맞지 않아요.
+          </p>
         </div>
-      </div>
-    `;
+        <div class="grade-metrics">
+          <div class="grade-metric-box">
+            <span>소요 시간</span>
+            <strong>${state.elapsedSec.toFixed(1)}초</strong>
+          </div>
+          <div class="grade-metric-box">
+            <span>조작 단계</span>
+            <strong>${validStepCount}단계</strong>
+          </div>
+          <div class="grade-metric-box">
+            <span>채점 결과</span>
+            <strong style="color:#dc2626;">오답 (-10%)</strong>
+          </div>
+        </div>
+      `;
+
+      if (el.gradeScoreCard) {
+        el.gradeScoreCard.className = "grade-score-card loss";
+        el.gradeScoreCard.innerHTML = `
+          <div class="score-card-main">
+            <span class="score-card-title">⚠️ -${scoreDelta}점 감점</span>
+            <span class="score-card-breakdown">문제를 틀려 현재 점수의 10%가 감점되었습니다. (이전 ${beforeScore}점)</span>
+          </div>
+          <div class="score-card-total-box">
+            <span>현재 누적 점수</span>
+            <strong>${state.currentScore}점</strong>
+          </div>
+        `;
+      }
+    }
 
     // 나의 풀이 과정 렌더링
     const initEq = formatEquation({ a: initA, b: initB, c: initC, d: initD });
@@ -985,7 +1125,7 @@
 
     if (state.steps.length === 0) {
       myItems.push(
-        `<li><span class="step-rule-tag r2">직접 추론</span> 저울 조작 없이 방정식에서 바로 x = ${x} 도출<span class="g-eq">x = ${x}</span></li>`
+        `<li><span class="step-rule-tag r2">직접 추론</span> 저울 조작 없이 방정식에서 바로 x = ${userX} 도출<span class="g-eq">x = ${userX}</span></li>`
       );
     } else {
       state.steps.forEach((st) => {
@@ -1014,36 +1154,14 @@
       )
       .join("");
 
-    // 🏆 명예의 전당 랭킹 등록 카드 데이터 초기화
-    const diffNames = {
-      basic: "기초 (30초)",
-      standard: "표준 (40초)",
-      challenge: "심화 (1분)",
-    };
-    if (el.rankSubmitDiffBadge) {
-      el.rankSubmitDiffBadge.textContent = diffNames[state.difficulty] || "표준 모드";
-      el.rankSubmitTimeText.textContent = `${state.elapsedSec.toFixed(1)}초`;
-      el.rankSubmitStepsText.textContent = `${validStepCount}단계`;
-      el.rankSubmitResult.classList.add("hidden");
-      el.rankSubmitForm.classList.remove("hidden");
-      el.btnSubmitToRanking.disabled = false;
-
-      try {
-        const savedNick = localStorage.getItem("sugar_merchant_nickname") || "";
-        if (savedNick) {
-          el.rankNicknameInput.value = savedNick;
-        }
-      } catch (e) {}
+    // 다음 문제 버튼 텍스트 설정 (5번째 문제면 스테이지 완주로 유도)
+    if (el.btnNextProblemModal) {
+      if (state.stageQuestionIndex >= STAGE_TOTAL_QUESTIONS) {
+        el.btnNextProblemModal.textContent = "🏆 스테이지 최종 결과 확인하기 ➔";
+      } else {
+        el.btnNextProblemModal.textContent = `🎲 다음 배달 문제 (${state.stageQuestionIndex + 1}/${STAGE_TOTAL_QUESTIONS}) 풀기 ➔`;
+      }
     }
-
-    state.lastSolvedEntry = {
-      difficulty: state.difficulty,
-      solveTimeSec: state.elapsedSec,
-      stepCount: validStepCount,
-      remainingSec: state.remainingSec,
-      equation: initEq,
-      ansX: x,
-    };
 
     openModal("gradingModal");
   }
@@ -1146,13 +1264,17 @@
               })
             : "-";
 
+          const scoreVal = entry.score ?? 0;
+          const correctVal = entry.correctCount ?? 5;
+          const timeVal = (entry.totalSolveTimeSec ?? entry.solveTimeSec ?? 0).toFixed(1);
+
           return `
             <tr class="${rowClass}">
               <td>${rankBadge}</td>
               <td><strong>${escapeHtml(entry.nickname)}</strong></td>
-              <td><b style="color:#d97706;font-size:14px;">${entry.solveTimeSec.toFixed(1)}초</b></td>
-              <td>${entry.stepCount}단계</td>
-              <td><small>${escapeHtml(entry.equation || "-")}</small></td>
+              <td><span class="ranking-score-cell">🪙 ${scoreVal}점</span></td>
+              <td><b>${correctVal} / 5</b></td>
+              <td><small>${timeVal}초</small></td>
               <td><small style="color:var(--text-muted);">${dateStr}</small></td>
             </tr>
           `;
@@ -1701,29 +1823,6 @@
       tpl.addEventListener("pointerdown", onItemPointerDown);
     });
 
-    // 난이도 탭 전환
-    el.diffTabs.forEach((tab) => {
-      tab.addEventListener("click", () => {
-        el.diffTabs.forEach((t) => {
-          t.classList.remove("active");
-          t.setAttribute("aria-selected", "false");
-        });
-        tab.classList.add("active");
-        tab.setAttribute("aria-selected", "true");
-        state.difficulty = tab.dataset.diff;
-        startNewProblem();
-      });
-    });
-
-    // 새 문제 & 현재 문제 초기화
-    el.btnNewProblem.addEventListener("click", () => {
-      startNewProblem();
-    });
-
-    el.btnResetCurrent.addEventListener("click", () => {
-      resetToProblemStart(true);
-    });
-
     // 단계 확정 버튼 (불균형 시 규칙 3 발동!)
     el.btnConfirmStep.addEventListener("click", () => {
       if (state.isSolved || state.isTimeOver) return;
@@ -1767,19 +1866,200 @@
       applyRatioOperation(op, factor);
     });
 
+    // 5문제 스테이지 진행: 다음 문제로 넘어가거나 스테이지 완주 모달 띄우기
+    function handleAdvanceNextQuestion() {
+      closeModal("gradingModal");
+      closeModal("timeoverModal");
+
+      if (state.stageQuestionIndex >= STAGE_TOTAL_QUESTIONS) {
+        // 5문제 완주! 최종 결과 발표 & 랭킹 등록 모달 오픈!
+        openStageClearModal();
+      } else {
+        state.stageQuestionIndex += 1;
+        startNewProblem();
+        sfx.pickup();
+      }
+    }
+
+    // 🏆 스테이지 5문제 완주 모달 열기
+    function openStageClearModal() {
+      pauseTimer();
+      sfx.correct();
+
+      const diffNames = {
+        basic: "기초 단계 (30초)",
+        standard: "표준 단계 (40초)",
+        challenge: "심화 단계 (1분)",
+      };
+
+      if (el.stageFinalScore) {
+        el.stageFinalScore.textContent = `${state.currentScore}점`;
+      }
+      if (el.stageScoreFormula) {
+        el.stageScoreFormula.textContent = `기본 100점 + 남은 시간 스피드 보너스 (오답 -10%, 시간초과 -30% 적용)`;
+      }
+      if (el.stageCorrectStats) {
+        el.stageCorrectStats.textContent = `${state.stageCorrectCount} / ${STAGE_TOTAL_QUESTIONS}`;
+      }
+      if (el.stageAccuracyText) {
+        const accPct = Math.round((state.stageCorrectCount / STAGE_TOTAL_QUESTIONS) * 100);
+        el.stageAccuracyText.textContent = `정확도 ${accPct}% (${state.stageCorrectCount}문제 성공)`;
+      }
+      if (el.stageTotalTimeText) {
+        el.stageTotalTimeText.textContent = `${state.stageTotalSolveTimeSec.toFixed(1)}초`;
+      }
+      if (el.stageAvgTimeText) {
+        const avgSec = state.stageTotalSolveTimeSec / STAGE_TOTAL_QUESTIONS;
+        el.stageAvgTimeText.textContent = `문제당 평균 ${avgSec.toFixed(1)}초`;
+      }
+      if (el.stageTotalStepsText) {
+        el.stageTotalStepsText.textContent = `${state.stageTotalSteps}단계`;
+      }
+      if (el.stageDiffBadge) {
+        el.stageDiffBadge.textContent = diffNames[state.difficulty] || "표준 모드";
+      }
+      if (el.stageRankDiffBadge) {
+        el.stageRankDiffBadge.textContent = diffNames[state.difficulty] || "표준 모드";
+      }
+
+      // 랭킹 등록 폼 초기화
+      if (el.stageRankSubmitResult) {
+        el.stageRankSubmitResult.classList.add("hidden");
+      }
+      if (el.stageRankSubmitForm) {
+        el.stageRankSubmitForm.classList.remove("hidden");
+      }
+      if (el.btnSubmitStageScore) {
+        el.btnSubmitStageScore.disabled = false;
+        el.btnSubmitStageScore.textContent = "🏆 내 순위 등록하기";
+      }
+
+      try {
+        const savedNick = localStorage.getItem("sugar_merchant_nickname") || "";
+        if (savedNick && el.stageRankNicknameInput) {
+          el.stageRankNicknameInput.value = savedNick;
+        }
+      } catch (e) {}
+
+      state.lastCompletedStageEntry = {
+        difficulty: state.difficulty,
+        score: state.currentScore,
+        correctCount: state.stageCorrectCount,
+        totalQuestions: STAGE_TOTAL_QUESTIONS,
+        totalSolveTimeSec: state.stageTotalSolveTimeSec,
+        totalSteps: state.stageTotalSteps,
+      };
+
+      openModal("stageClearModal");
+    }
+
+    // 새 스테이지 시작 (1번 문제부터 점수 0점으로 시작)
+    function startStage(diff = state.difficulty) {
+      state.difficulty = diff;
+      state.stageQuestionIndex = 1;
+      state.currentScore = 0;
+      state.stageCorrectCount = 0;
+      state.stageTotalSolveTimeSec = 0;
+      state.stageTotalSteps = 0;
+      startNewProblem();
+    }
+
+    // 난이도 탭 클릭 시 해당 스테이지 새로 시작
+    el.diffTabs.forEach((tab) => {
+      tab.addEventListener("click", () => {
+        el.diffTabs.forEach((t) => {
+          t.classList.remove("active");
+          t.setAttribute("aria-selected", "false");
+        });
+        tab.classList.add("active");
+        tab.setAttribute("aria-selected", "true");
+        startStage(tab.dataset.diff);
+      });
+    });
+
+    // 새 문제 & 현재 문제 초기화
+    el.btnNewProblem.addEventListener("click", () => {
+      startNewProblem();
+    });
+
+    el.btnResetCurrent.addEventListener("click", () => {
+      resetToProblemStart(true);
+    });
+
     // 정답 제출 폼
     el.answerForm.addEventListener("submit", handleAnswerSubmit);
 
-    // 타임오버 모달 버튼
-    el.btnRetryTimeover.addEventListener("click", () => {
-      closeModal("timeoverModal");
-      resetToProblemStart(false);
+    // 채점 모달 내 '다음 문제' 버튼
+    el.btnNextProblemModal.addEventListener("click", () => {
+      handleAdvanceNextQuestion();
     });
 
+    // 타임오버 모달 '다음 문제' 버튼
     el.btnNextTimeover.addEventListener("click", () => {
-      closeModal("timeoverModal");
-      startNewProblem();
+      handleAdvanceNextQuestion();
     });
+
+    // 🏆 스테이지 완주 모달 랭킹 등록
+    if (el.stageRankSubmitForm) {
+      el.stageRankSubmitForm.addEventListener("submit", async (e) => {
+        e.preventDefault();
+        const nickname = el.stageRankNicknameInput.value.trim();
+        if (!nickname || nickname.length < 2) {
+          alert("닉네임을 2자 이상 입력해 주세요!");
+          el.stageRankNicknameInput.focus();
+          return;
+        }
+
+        if (!state.lastCompletedStageEntry) return;
+
+        el.btnSubmitStageScore.disabled = true;
+        el.btnSubmitStageScore.textContent = "등록 중...";
+
+        try {
+          localStorage.setItem("sugar_merchant_nickname", nickname);
+        } catch (err) {}
+
+        const res = await window.SugarRanking.submitScore({
+          ...state.lastCompletedStageEntry,
+          nickname,
+        });
+
+        if (res && res.success) {
+          rankingState.lastSubmittedId = res.id;
+          sfx.correct();
+
+          el.stageRankSubmitForm.classList.add("hidden");
+          el.stageRankSubmitResult.className = "rank-submit-result success";
+          if (el.stageRankSuccessMsg) {
+            el.stageRankSuccessMsg.innerHTML = `🎉 <b>${escapeHtml(nickname)}</b>님의 점수(<b>${state.currentScore}점</b>)가 명예의 전당에 실시간 등록되었습니다!`;
+          }
+          el.stageRankSubmitResult.classList.remove("hidden");
+        } else {
+          el.btnSubmitStageScore.disabled = false;
+          el.btnSubmitStageScore.textContent = "🏆 내 순위 등록하기";
+          alert("등록에 실패했습니다. 다시 시도해 주세요.");
+        }
+      });
+    }
+
+    if (el.btnViewLeaderboardAfterSubmit) {
+      el.btnViewLeaderboardAfterSubmit.addEventListener("click", () => {
+        openRankingModal(state.difficulty);
+      });
+    }
+
+    if (el.btnOpenLeaderboardFromClear) {
+      el.btnOpenLeaderboardFromClear.addEventListener("click", () => {
+        openRankingModal(state.difficulty);
+      });
+    }
+
+    if (el.btnRestartStage) {
+      el.btnRestartStage.addEventListener("click", () => {
+        closeModal("stageClearModal");
+        startStage(state.difficulty);
+      });
+    }
 
     // 🏆 랭킹 모달 열기 버튼
     if (el.btnOpenRanking) {
@@ -1824,55 +2104,6 @@
       });
     }
 
-    // 🏆 정답 모달 내 랭킹 등록 폼 제출
-    if (el.rankSubmitForm) {
-      el.rankSubmitForm.addEventListener("submit", async (e) => {
-        e.preventDefault();
-        const nickname = el.rankNicknameInput.value.trim();
-        if (!nickname || nickname.length < 2) {
-          alert("닉네임을 2자 이상 입력해 주세요!");
-          el.rankNicknameInput.focus();
-          return;
-        }
-
-        if (!state.lastSolvedEntry) return;
-
-        el.btnSubmitToRanking.disabled = true;
-        el.btnSubmitToRanking.textContent = "등록 중...";
-
-        try {
-          localStorage.setItem("sugar_merchant_nickname", nickname);
-        } catch (err) {}
-
-        const res = await window.SugarRanking.submitScore({
-          ...state.lastSolvedEntry,
-          nickname,
-        });
-
-        if (res && res.success) {
-          rankingState.lastSubmittedId = res.id;
-          sfx.correct();
-
-          el.rankSubmitForm.classList.add("hidden");
-          el.rankSubmitResult.className = "rank-submit-result success";
-          if (el.rankSubmitSuccessMsg) {
-            el.rankSubmitSuccessMsg.innerHTML = `🎉 <b>${escapeHtml(nickname)}</b>님의 기록이 명예의 전당에 등록되었습니다!`;
-          }
-          el.rankSubmitResult.classList.remove("hidden");
-        } else {
-          el.btnSubmitToRanking.disabled = false;
-          el.btnSubmitToRanking.textContent = "🏆 순위 등록하기";
-          alert("등록에 실패했습니다. 다시 시도해 주세요.");
-        }
-      });
-    }
-
-    if (el.btnViewRankAfterSubmit) {
-      el.btnViewRankAfterSubmit.addEventListener("click", () => {
-        openRankingModal(state.lastSolvedEntry ? state.lastSolvedEntry.difficulty : state.difficulty);
-      });
-    }
-
     // 출발하기 버튼 클릭 시 타이머 시작 및 게임 돌입!
     if (el.btnStartMission) {
       el.btnStartMission.addEventListener("click", (e) => {
@@ -1905,7 +2136,16 @@
       });
     });
 
-    [el.missionModal, el.gradingModal, el.recordsModal, el.timeoverModal, el.rankingModal].forEach((backdrop) => {
+    const allModals = [
+      el.missionModal,
+      el.gradingModal,
+      el.recordsModal,
+      el.timeoverModal,
+      el.rankingModal,
+      el.stageClearModal,
+    ];
+
+    allModals.forEach((backdrop) => {
       if (!backdrop) return;
       backdrop.addEventListener("click", (e) => {
         if (e.target === backdrop) {
@@ -1917,11 +2157,6 @@
           }
         }
       });
-    });
-
-    el.btnNextProblemModal.addEventListener("click", () => {
-      closeModal("gradingModal");
-      startNewProblem();
     });
 
     // 기록 초기화
@@ -1946,7 +2181,7 @@
         const wasPaused = (el.recordsModal && !el.recordsModal.classList.contains("hidden")) ||
                           (el.rankingModal && !el.rankingModal.classList.contains("hidden"));
 
-        [el.missionModal, el.gradingModal, el.recordsModal, el.timeoverModal, el.rankingModal].forEach((m) => {
+        allModals.forEach((m) => {
           if (m) m.classList.add("hidden");
         });
 
