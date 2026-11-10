@@ -106,12 +106,11 @@
     async getLeaderboard(difficulty = "standard") {
       if (this.isCloudConnected()) {
         try {
+          // 복합 색인(Index) 설정 번거로움 없이 즉시 작동하도록 난이도별 조회 후 클라이언트 정렬
           const snapshot = await firestoreDb
             .collection("leaderboard")
             .where("difficulty", "==", difficulty)
-            .orderBy("solveTimeSec", "asc")
-            .orderBy("stepCount", "asc")
-            .limit(20)
+            .limit(100)
             .get();
 
           const list = [];
@@ -128,7 +127,16 @@
               createdAt: data.createdAt ? (data.createdAt.toMillis ? data.createdAt.toMillis() : data.createdAt) : Date.now(),
             });
           });
-          return list;
+
+          // 1순위: 해결 시간 빠른 순, 2순위: 조작 단계 적은 순으로 정렬 후 상위 20개 반환
+          list.sort((a, b) => {
+            if (a.solveTimeSec !== b.solveTimeSec) {
+              return a.solveTimeSec - b.solveTimeSec;
+            }
+            return a.stepCount - b.stepCount;
+          });
+
+          return list.slice(0, 20);
         } catch (err) {
           console.warn("Firestore 조회 실패 (로컬 데이터로 대체):", err);
           // 실패 시 로컬 데이터 fallback

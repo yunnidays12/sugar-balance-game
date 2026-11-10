@@ -55,18 +55,19 @@
 ### 2단계: Firestore Database 생성 및 보안 규칙 설정
 1. Firebase 콘솔 좌측 메뉴에서 **빌드 ➔ Firestore Database**를 선택하고 **데이터베이스 만들기**를 클릭합니다.
 2. 위치는 가까운 리전(예: `asia-northeast3` 서울)을 선택합니다.
-3. 보안 규칙 탭에서 읽기/쓰기가 가능하도록 규칙을 설정하고 **게시**를 누릅니다:
+3. 데이터베이스 생성 후 상단의 **규칙(Rules)** 탭으로 이동하여 기존 내용을 모두 지우고 아래 코드를 그대로 붙여넣은 뒤 **[게시]**(또는 Publish)를 누릅니다:
    ```javascript
    rules_version = '2';
    service cloud.firestore {
      match /databases/{database}/documents {
-       match /leaderboard_{difficulty}/{docId} {
-         // 누구나 랭킹을 조회하고 등록할 수 있도록 허용
+       match /leaderboard/{docId} {
+         // 누구나 설탕 배달 랭킹을 조회하고 등록할 수 있도록 허용
          allow read, write: if true;
        }
      }
    }
    ```
+   *(또는 간편하게 `match /{document=**} { allow read, write: if true; }` 로 설정하셔도 됩니다.)*
 
 ### 3단계: `firebase-config.js`에 설정 붙여넣기
 프로젝트 루트 폴더의 `firebase-config.js` 상단 `firebaseConfig` 객체에 1단계에서 복사한 값을 입력합니다:
