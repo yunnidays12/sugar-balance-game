@@ -1501,51 +1501,68 @@
   }
 
   function renderStats() {
-    const rec = state.records;
-    el.statCorrectCount.textContent = `${rec.correctCount}개`;
+    // 5문제 스테이지 진행도 & 현재 점수 표시
+    if (el.statQuestionProg) {
+      el.statQuestionProg.textContent = `문제 ${state.stageQuestionIndex} / ${STAGE_TOTAL_QUESTIONS}`;
+    }
+    if (el.statCurrentScore) {
+      el.statCurrentScore.textContent = `${state.currentScore}점`;
+    }
+    if (el.statCorrectCount) {
+      el.statCorrectCount.textContent = `${state.stageCorrectCount} / ${STAGE_TOTAL_QUESTIONS}`;
+    }
 
+    const rec = state.records;
     const avgText =
       rec.correctCount > 0
         ? `${(rec.totalSolveTimeSec / rec.correctCount).toFixed(1)}초`
         : "-";
-    el.statAvgTime.textContent = avgText;
+    if (el.statAvgTime) {
+      el.statAvgTime.textContent = avgText;
+    }
 
     const accText =
       rec.totalSubmissions > 0
         ? `${((rec.correctCount / rec.totalSubmissions) * 100).toFixed(1)}%`
         : "-";
-    el.statAccuracy.textContent = accText;
+    if (el.statAccuracy) {
+      el.statAccuracy.textContent = accText;
+    }
 
     // 기록장 모달 내부 수치 동기화
-    el.modalCorrectCount.textContent = `${rec.correctCount}개`;
-    el.modalAttemptSub.textContent = `총 채점 시도 ${rec.totalSubmissions}회`;
-    el.modalAvgTime.textContent = avgText;
-    el.modalBestTimeSub.textContent =
-      rec.bestTimeSec !== null ? `최단 기록: ${rec.bestTimeSec.toFixed(1)}초` : "최단 기록: -";
-    el.modalAccuracy.textContent = accText;
-    el.modalRule3Sub.textContent = `규칙3 무효 발생: ${rec.rule3Violations}회`;
+    if (el.modalCorrectCount) el.modalCorrectCount.textContent = `${rec.correctCount}개`;
+    if (el.modalAttemptSub) el.modalAttemptSub.textContent = `총 채점 시도 ${rec.totalSubmissions}회`;
+    if (el.modalAvgTime) el.modalAvgTime.textContent = avgText;
+    if (el.modalBestTimeSub) {
+      el.modalBestTimeSub.textContent =
+        rec.bestTimeSec !== null ? `최단 기록: ${rec.bestTimeSec.toFixed(1)}초` : "최단 기록: -";
+    }
+    if (el.modalAccuracy) el.modalAccuracy.textContent = accText;
+    if (el.modalRule3Sub) el.modalRule3Sub.textContent = `규칙3 무효 발생: ${rec.rule3Violations}회`;
 
-    if (rec.history.length === 0) {
-      el.historyTableBody.innerHTML = `
-        <tr>
-          <td colspan="6" style="color:var(--text-muted);padding:18px;">아직 완료한 배달 기록이 없습니다. 첫 문제를 해결해 보세요!</td>
-        </tr>
-      `;
-    } else {
-      el.historyTableBody.innerHTML = rec.history
-        .map(
-          (item, idx) => `
+    if (el.historyTableBody) {
+      if (rec.history.length === 0) {
+        el.historyTableBody.innerHTML = `
           <tr>
-            <td>${rec.history.length - idx}</td>
-            <td><strong>${item.eq}</strong></td>
-            <td>x = ${item.x}kg</td>
-            <td>${item.timeSec.toFixed(1)}초</td>
-            <td>${item.steps}단계</td>
-            <td>${item.isolated ? "🌟 저울 완주" : "✅ 정답"}</td>
+            <td colspan="6" style="color:var(--text-muted);padding:18px;">아직 완료한 배달 기록이 없습니다. 첫 문제를 해결해 보세요!</td>
           </tr>
-        `
-        )
-        .join("");
+        `;
+      } else {
+        el.historyTableBody.innerHTML = rec.history
+          .map(
+            (item, idx) => `
+            <tr>
+              <td>${rec.history.length - idx}</td>
+              <td><strong>${item.eq}</strong></td>
+              <td>x = ${item.x}kg</td>
+              <td>${item.timeSec.toFixed(1)}초</td>
+              <td>${item.steps}단계</td>
+              <td>${item.isolated ? "🌟 저울 완주" : item.isCorrect === false ? "❌ 오답" : "✅ 정답"}</td>
+            </tr>
+          `
+          )
+          .join("");
+      }
     }
   }
 
