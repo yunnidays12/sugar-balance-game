@@ -9,12 +9,13 @@
   // 전 세계 모든 사용자와 실시간으로 공유되는 온라인 랭킹이 즉시 활성화됩니다!
   // ==========================================================================
   const firebaseConfig = {
-    apiKey: "YOUR_API_KEY",
-    authDomain: "YOUR_PROJECT_ID.firebaseapp.com",
-    projectId: "YOUR_PROJECT_ID",
-    storageBucket: "YOUR_PROJECT_ID.appspot.com",
-    messagingSenderId: "YOUR_SENDER_ID",
-    appId: "YOUR_APP_ID",
+    apiKey: "AIzaSyCt8X41ov0qvhVUzPSZpi2E6u_E6xkblDU",
+    authDomain: "math-playing-sugar-seller.firebaseapp.com",
+    projectId: "math-playing-sugar-seller",
+    storageBucket: "math-playing-sugar-seller.firebasestorage.app",
+    messagingSenderId: "1002438296404",
+    appId: "1:1002438296404:web:12efd010ba1b0be26afec1",
+    measurementId: "G-S5426W0FKD",
   };
 
   const MOCK_STORAGE_KEY = "sugar_merchant_mock_leaderboard_v1";
