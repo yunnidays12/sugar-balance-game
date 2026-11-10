@@ -232,6 +232,7 @@
 
     btnOpenMission: document.getElementById("btnOpenMission"),
     btnStartMission: document.getElementById("btnStartMission"),
+    btnOpenRanking: document.getElementById("btnOpenRanking"),
     btnOpenRecords: document.getElementById("btnOpenRecords"),
     btnToggleSound: document.getElementById("btnToggleSound"),
 
@@ -296,6 +297,28 @@
     timeoverAnswerHint: document.getElementById("timeoverAnswerHint"),
     btnRetryTimeover: document.getElementById("btnRetryTimeover"),
     btnNextTimeover: document.getElementById("btnNextTimeover"),
+
+    // 🏆 랭킹보드 모달 및 관련 요소
+    rankingModal: document.getElementById("rankingModal"),
+    rankingTabs: document.querySelectorAll(".ranking-tab"),
+    cloudStatusPill: document.getElementById("cloudStatusPill"),
+    cloudStatusText: document.getElementById("cloudStatusText"),
+    btnRefreshRanking: document.getElementById("btnRefreshRanking"),
+    rankingTableBody: document.getElementById("rankingTableBody"),
+    btnPlayFromRanking: document.getElementById("btnPlayFromRanking"),
+
+    // 🏆 정답 모달 내 랭킹 등록 요소
+    gradeRankingBox: document.getElementById("gradeRankingBox"),
+    rankSubmitDiffBadge: document.getElementById("rankSubmitDiffBadge"),
+    rankSubmitTimeText: document.getElementById("rankSubmitTimeText"),
+    rankSubmitStepsText: document.getElementById("rankSubmitStepsText"),
+    rankSubmitForm: document.getElementById("rankSubmitForm"),
+    rankNicknameInput: document.getElementById("rankNicknameInput"),
+    btnSubmitToRanking: document.getElementById("btnSubmitToRanking"),
+    rankSubmitResult: document.getElementById("rankSubmitResult"),
+    rankSubmitSuccessMsg: document.getElementById("rankSubmitSuccessMsg"),
+    btnViewRankAfterSubmit: document.getElementById("btnViewRankAfterSubmit"),
+    btnOpenRankingFromGrading: document.getElementById("btnOpenRankingFromGrading"),
 
     gradeHeroBox: document.getElementById("gradeHeroBox"),
     myGradeSteps: document.getElementById("myGradeSteps"),
@@ -991,7 +1014,159 @@
       )
       .join("");
 
+    // 🏆 명예의 전당 랭킹 등록 카드 데이터 초기화
+    const diffNames = {
+      basic: "기초 (30초)",
+      standard: "표준 (40초)",
+      challenge: "심화 (1분)",
+    };
+    if (el.rankSubmitDiffBadge) {
+      el.rankSubmitDiffBadge.textContent = diffNames[state.difficulty] || "표준 모드";
+      el.rankSubmitTimeText.textContent = `${state.elapsedSec.toFixed(1)}초`;
+      el.rankSubmitStepsText.textContent = `${validStepCount}단계`;
+      el.rankSubmitResult.classList.add("hidden");
+      el.rankSubmitForm.classList.remove("hidden");
+      el.btnSubmitToRanking.disabled = false;
+
+      try {
+        const savedNick = localStorage.getItem("sugar_merchant_nickname") || "";
+        if (savedNick) {
+          el.rankNicknameInput.value = savedNick;
+        }
+      } catch (e) {}
+    }
+
+    state.lastSolvedEntry = {
+      difficulty: state.difficulty,
+      solveTimeSec: state.elapsedSec,
+      stepCount: validStepCount,
+      remainingSec: state.remainingSec,
+      equation: initEq,
+      ansX: x,
+    };
+
     openModal("gradingModal");
+  }
+
+  // ==========================================================================
+  // [랭킹 시스템] Firestore DB 연동 및 리더보드 렌더링
+  // ==========================================================================
+  const rankingState = {
+    currentDiff: "standard",
+    lastSubmittedId: null,
+  };
+
+  function escapeHtml(str) {
+    return String(str)
+      .replace(/&/g, "&amp;")
+      .replace(/</g, "&lt;")
+      .replace(/>/g, "&gt;")
+      .replace(/"/g, "&quot;")
+      .replace(/'/g, "&#39;");
+  }
+
+  function updateCloudStatusPill() {
+    if (!el.cloudStatusPill || !window.SugarRanking) return;
+    const isCloud = window.SugarRanking.isCloudConnected();
+    if (isCloud) {
+      el.cloudStatusPill.className = "cloud-status-pill online";
+      el.cloudStatusText.textContent = "Firestore 실시간 연결됨";
+    } else {
+      el.cloudStatusPill.className = "cloud-status-pill local";
+      el.cloudStatusText.textContent = "로컬/데모 랭킹 모드";
+    }
+  }
+
+  async function openRankingModal(diff = state.difficulty) {
+    rankingState.currentDiff = diff;
+    pauseTimer();
+
+    // 탭 선택 상태 동기화
+    el.rankingTabs.forEach((tab) => {
+      const isAct = tab.dataset.rankDiff === rankingState.currentDiff;
+      tab.classList.toggle("active", isAct);
+      tab.setAttribute("aria-selected", isAct ? "true" : "false");
+    });
+
+    updateCloudStatusPill();
+    openModal("rankingModal");
+    await renderRankingTable(rankingState.currentDiff);
+  }
+
+  async function renderRankingTable(diff) {
+    if (!el.rankingTableBody) return;
+
+    el.rankingTableBody.innerHTML = `
+      <tr>
+        <td colspan="6" style="padding:26px;color:var(--text-muted);font-weight:600;">
+          ⏳ 랭킹 기록을 불러오는 중입니다...
+        </td>
+      </tr>
+    `;
+
+    try {
+      const list = await window.SugarRanking.getLeaderboard(diff);
+      if (!list || list.length === 0) {
+        el.rankingTableBody.innerHTML = `
+          <tr>
+            <td colspan="6" style="padding:32px;color:var(--text-muted);">
+              아직 등록된 랭킹 기록이 없습니다. 지금 첫 번째 명예의 전당 주인공이 되어보세요!
+            </td>
+          </tr>
+        `;
+        return;
+      }
+
+      el.rankingTableBody.innerHTML = list
+        .map((entry, idx) => {
+          const rank = idx + 1;
+          let rankBadge = `<span class="rank-badge">${rank}</span>`;
+          let rowClass = `rank-row`;
+          if (rank === 1) {
+            rankBadge = `<span class="rank-badge">🥇 1</span>`;
+            rowClass += " rank-1";
+          } else if (rank === 2) {
+            rankBadge = `<span class="rank-badge">🥈 2</span>`;
+            rowClass += " rank-2";
+          } else if (rank === 3) {
+            rankBadge = `<span class="rank-badge">🥉 3</span>`;
+            rowClass += " rank-3";
+          }
+
+          if (rankingState.lastSubmittedId && entry.id === rankingState.lastSubmittedId) {
+            rowClass += " my-rank-row";
+          }
+
+          const dateStr = entry.createdAt
+            ? new Date(entry.createdAt).toLocaleDateString("ko-KR", {
+                month: "short",
+                day: "numeric",
+                hour: "2-digit",
+                minute: "2-digit",
+              })
+            : "-";
+
+          return `
+            <tr class="${rowClass}">
+              <td>${rankBadge}</td>
+              <td><strong>${escapeHtml(entry.nickname)}</strong></td>
+              <td><b style="color:#d97706;font-size:14px;">${entry.solveTimeSec.toFixed(1)}초</b></td>
+              <td>${entry.stepCount}단계</td>
+              <td><small>${escapeHtml(entry.equation || "-")}</small></td>
+              <td><small style="color:var(--text-muted);">${dateStr}</small></td>
+            </tr>
+          `;
+        })
+        .join("");
+    } catch (err) {
+      el.rankingTableBody.innerHTML = `
+        <tr>
+          <td colspan="6" style="padding:22px;color:#dc2626;font-weight:700;">
+            ⚠️ 랭킹 목록을 불러오는 도중 오류가 발생했습니다. 잠시 후 새로고침해 주세요.
+          </td>
+        </tr>
+      `;
+    }
   }
 
   // =========================
@@ -1606,6 +1781,98 @@
       startNewProblem();
     });
 
+    // 🏆 랭킹 모달 열기 버튼
+    if (el.btnOpenRanking) {
+      el.btnOpenRanking.addEventListener("click", () => {
+        openRankingModal(state.difficulty);
+      });
+    }
+
+    if (el.btnOpenRankingFromGrading) {
+      el.btnOpenRankingFromGrading.addEventListener("click", () => {
+        openRankingModal(state.difficulty);
+      });
+    }
+
+    // 🏆 랭킹보드 난이도 탭 전환
+    if (el.rankingTabs) {
+      el.rankingTabs.forEach((tab) => {
+        tab.addEventListener("click", () => {
+          const targetDiff = tab.dataset.rankDiff;
+          rankingState.currentDiff = targetDiff;
+          el.rankingTabs.forEach((t) => {
+            const isAct = t === tab;
+            t.classList.toggle("active", isAct);
+            t.setAttribute("aria-selected", isAct ? "true" : "false");
+          });
+          renderRankingTable(targetDiff);
+        });
+      });
+    }
+
+    // 🏆 랭킹보드 새로고침
+    if (el.btnRefreshRanking) {
+      el.btnRefreshRanking.addEventListener("click", () => {
+        renderRankingTable(rankingState.currentDiff);
+      });
+    }
+
+    if (el.btnPlayFromRanking) {
+      el.btnPlayFromRanking.addEventListener("click", () => {
+        closeModal("rankingModal");
+        resumeTimer();
+      });
+    }
+
+    // 🏆 정답 모달 내 랭킹 등록 폼 제출
+    if (el.rankSubmitForm) {
+      el.rankSubmitForm.addEventListener("submit", async (e) => {
+        e.preventDefault();
+        const nickname = el.rankNicknameInput.value.trim();
+        if (!nickname || nickname.length < 2) {
+          alert("닉네임을 2자 이상 입력해 주세요!");
+          el.rankNicknameInput.focus();
+          return;
+        }
+
+        if (!state.lastSolvedEntry) return;
+
+        el.btnSubmitToRanking.disabled = true;
+        el.btnSubmitToRanking.textContent = "등록 중...";
+
+        try {
+          localStorage.setItem("sugar_merchant_nickname", nickname);
+        } catch (err) {}
+
+        const res = await window.SugarRanking.submitScore({
+          ...state.lastSolvedEntry,
+          nickname,
+        });
+
+        if (res && res.success) {
+          rankingState.lastSubmittedId = res.id;
+          sfx.correct();
+
+          el.rankSubmitForm.classList.add("hidden");
+          el.rankSubmitResult.className = "rank-submit-result success";
+          if (el.rankSubmitSuccessMsg) {
+            el.rankSubmitSuccessMsg.innerHTML = `🎉 <b>${escapeHtml(nickname)}</b>님의 기록이 명예의 전당에 등록되었습니다!`;
+          }
+          el.rankSubmitResult.classList.remove("hidden");
+        } else {
+          el.btnSubmitToRanking.disabled = false;
+          el.btnSubmitToRanking.textContent = "🏆 순위 등록하기";
+          alert("등록에 실패했습니다. 다시 시도해 주세요.");
+        }
+      });
+    }
+
+    if (el.btnViewRankAfterSubmit) {
+      el.btnViewRankAfterSubmit.addEventListener("click", () => {
+        openRankingModal(state.lastSolvedEntry ? state.lastSolvedEntry.difficulty : state.difficulty);
+      });
+    }
+
     // 출발하기 버튼 클릭 시 타이머 시작 및 게임 돌입!
     if (el.btnStartMission) {
       el.btnStartMission.addEventListener("click", (e) => {
@@ -1632,19 +1899,20 @@
         closeModal(modalId);
         if (modalId === "missionModal") {
           launchMissionGame();
-        } else if (modalId === "recordsModal") {
+        } else if (modalId === "recordsModal" || modalId === "rankingModal") {
           resumeTimer();
         }
       });
     });
 
-    [el.missionModal, el.gradingModal, el.recordsModal, el.timeoverModal].forEach((backdrop) => {
+    [el.missionModal, el.gradingModal, el.recordsModal, el.timeoverModal, el.rankingModal].forEach((backdrop) => {
+      if (!backdrop) return;
       backdrop.addEventListener("click", (e) => {
         if (e.target === backdrop) {
           backdrop.classList.add("hidden");
           if (backdrop === el.missionModal) {
             launchMissionGame();
-          } else if (backdrop === el.recordsModal) {
+          } else if (backdrop === el.recordsModal || backdrop === el.rankingModal) {
             resumeTimer();
           }
         }
@@ -1674,16 +1942,17 @@
     // ESC 키로 열려 있는 모달 닫기
     window.addEventListener("keydown", (e) => {
       if (e.key === "Escape") {
-        const wasMission = !el.missionModal.classList.contains("hidden");
-        const wasRecords = !el.recordsModal.classList.contains("hidden");
+        const wasMission = el.missionModal && !el.missionModal.classList.contains("hidden");
+        const wasPaused = (el.recordsModal && !el.recordsModal.classList.contains("hidden")) ||
+                          (el.rankingModal && !el.rankingModal.classList.contains("hidden"));
 
-        [el.missionModal, el.gradingModal, el.recordsModal, el.timeoverModal].forEach((m) =>
-          m.classList.add("hidden")
-        );
+        [el.missionModal, el.gradingModal, el.recordsModal, el.timeoverModal, el.rankingModal].forEach((m) => {
+          if (m) m.classList.add("hidden");
+        });
 
         if (wasMission) {
           launchMissionGame();
-        } else if (wasRecords) {
+        } else if (wasPaused) {
           resumeTimer();
         }
       }

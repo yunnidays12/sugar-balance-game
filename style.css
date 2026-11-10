@@ -2045,6 +2045,285 @@ input {
   line-height: 1.5;
 }
 
+/* ==========================================================================
+   실시간 랭킹 시스템 스타일 (Firestore 연동 & 명예의 전당)
+   ========================================================================== */
+.btn-ranking-top {
+  background: linear-gradient(135deg, #f59e0b, #d97706);
+  color: #ffffff;
+  border: 1px solid #b45309;
+  box-shadow: 0 2px 6px rgba(217, 119, 6, 0.28);
+}
+
+.btn-ranking-top:hover {
+  background: linear-gradient(135deg, #fbbf24, #b45309);
+  transform: translateY(-1px);
+}
+
+/* 정답 모달 내 랭킹 등록 박스 */
+.grade-ranking-box {
+  background: linear-gradient(180deg, #fffbeb 0%, #fef3c7 100%);
+  border: 2px solid #fcd34d;
+  border-radius: 14px;
+  padding: 12px 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.ranking-box-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+}
+
+.ranking-box-badge {
+  font-size: 13.5px;
+  font-weight: 800;
+  color: #92400e;
+}
+
+.ranking-diff-badge {
+  font-size: 11px;
+  font-weight: 800;
+  padding: 2px 7px;
+  border-radius: 999px;
+  background: #fef08a;
+  color: #854d0e;
+  border: 1px solid #facc15;
+}
+
+.ranking-box-desc {
+  margin: 0;
+  font-size: 12.5px;
+  color: #78350f;
+  line-height: 1.4;
+}
+
+.rank-submit-form {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+}
+
+.rank-nickname-input {
+  flex: 1;
+  padding: 7px 12px;
+  border: 1.5px solid #fbbf24;
+  border-radius: 10px;
+  font-size: 13px;
+  font-weight: 700;
+  background: #ffffff;
+  outline: none;
+}
+
+.rank-nickname-input:focus {
+  border-color: #d97706;
+  box-shadow: 0 0 0 3px rgba(217, 119, 6, 0.15);
+}
+
+.rank-submit-result {
+  padding: 7px 10px;
+  border-radius: 8px;
+  font-size: 12px;
+  font-weight: 700;
+}
+
+.rank-submit-result.success {
+  background: #dcfce7;
+  color: #166534;
+  border: 1px solid #86efac;
+}
+
+/* 랭킹보드 모달 */
+.ranking-modal-box {
+  max-width: 760px;
+}
+
+.ranking-modal-header {
+  background: #fffbeb;
+  border-bottom-color: #fde68a;
+}
+
+.ranking-title-group {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.ranking-trophy-icon {
+  font-size: 30px;
+  line-height: 1;
+}
+
+.ranking-sub-desc {
+  font-size: 11.5px;
+  color: #92400e;
+  font-weight: 600;
+}
+
+.ranking-top-bar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  flex-wrap: wrap;
+  padding-bottom: 4px;
+  border-bottom: 1px solid var(--border-soft);
+}
+
+.ranking-tabs {
+  display: flex;
+  gap: 6px;
+}
+
+.ranking-tab {
+  border: none;
+  background: var(--surface-warm);
+  border: 1.5px solid var(--border-soft);
+  padding: 6px 12px;
+  border-radius: 10px;
+  font-size: 12.5px;
+  font-weight: 700;
+  color: var(--text-sub);
+  cursor: pointer;
+  transition: all 0.14s ease;
+}
+
+.ranking-tab.active {
+  background: #f59e0b;
+  border-color: #d97706;
+  color: #ffffff;
+  box-shadow: 0 2px 6px rgba(217, 119, 6, 0.25);
+}
+
+.ranking-meta-actions {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.cloud-status-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  font-size: 11px;
+  font-weight: 700;
+  padding: 3px 8px;
+  border-radius: 999px;
+  background: #f1f5f9;
+  color: #475569;
+  border: 1px solid #cbd5e1;
+}
+
+.cloud-status-pill .status-dot {
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: #94a3b8;
+}
+
+.cloud-status-pill.online {
+  background: #ecfdf5;
+  color: #047857;
+  border-color: #a7f3d0;
+}
+
+.cloud-status-pill.online .status-dot {
+  background: #10b981;
+  box-shadow: 0 0 6px #10b981;
+}
+
+.cloud-status-pill.local {
+  background: #fffbeb;
+  color: #b45309;
+  border-color: #fde68a;
+}
+
+.cloud-status-pill.local .status-dot {
+  background: #f59e0b;
+}
+
+.ranking-table-wrap {
+  max-height: 380px;
+  overflow-y: auto;
+  border: 1.5px solid var(--border-soft);
+  border-radius: 14px;
+  background: #ffffff;
+}
+
+.ranking-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 13px;
+}
+
+.ranking-table th,
+.ranking-table td {
+  padding: 9px 12px;
+  text-align: center;
+  border-bottom: 1px solid #f1e8d8;
+}
+
+.ranking-table th {
+  background: var(--surface-warm);
+  font-weight: 800;
+  color: var(--text-sub);
+  position: sticky;
+  top: 0;
+  z-index: 2;
+}
+
+.rank-badge {
+  display: inline-grid;
+  place-items: center;
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  font-weight: 900;
+  font-size: 13px;
+  color: var(--text-main);
+  background: #f1f5f9;
+}
+
+.rank-1 .rank-badge {
+  background: linear-gradient(135deg, #fde047, #eab308);
+  color: #713f12;
+  box-shadow: 0 2px 6px rgba(234, 179, 8, 0.4);
+  font-size: 15px;
+}
+
+.rank-2 .rank-badge {
+  background: linear-gradient(135deg, #e2e8f0, #94a3b8);
+  color: #1e293b;
+  font-size: 15px;
+}
+
+.rank-3 .rank-badge {
+  background: linear-gradient(135deg, #fed7aa, #f97316);
+  color: #7c2d12;
+  font-size: 15px;
+}
+
+.ranking-table tr.rank-1 td {
+  background: #fffbeb;
+}
+
+.ranking-table tr.my-rank-row td {
+  background: #f0fdf4 !important;
+  font-weight: 700;
+}
+
+.ranking-firebase-tip {
+  background: var(--surface-warm);
+  border: 1px dashed var(--border-strong);
+  border-radius: 10px;
+  padding: 8px 12px;
+  font-size: 11.5px;
+  color: var(--text-sub);
+}
+
 /* 반응형 대응 */
 @media (max-width: 1040px) {
   .main-layout {

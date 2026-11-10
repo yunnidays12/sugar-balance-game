@@ -34,6 +34,55 @@
    - 학생이 조작한 단계별 등식 기록과 등식의 성질 표준 풀이 과정을 나란히 비교
 5. **학습 기록 자동 저장**
    - 정답 수, 평균 해결 시간, 정확도 및 최근 이력 `localStorage` 보존
+6. **🏆 실시간 명예의 전당 랭킹 시스템 (Firebase Firestore DB 연동)**
+   - 난이도별(기초/표준/심화) 타임어택 최단 시간 & 최소 단계 순위 산정
+   - 정답 클리어 시 즉시 닉네임 입력 후 랭킹 등록
+   - 1위(🥇 금메달), 2위(🥈 은메달), 3위(🥉 동메달) 하이라이트 및 내 기록 강조
+   - **무설정 즉시 플레이 지원**: Firebase 연동 전에는 `localStorage` 기반 데모 랭킹으로 바로 작동하며, Firebase 키 입력 시 전 세계 실시간 클라우드 DB로 자동 전환
+
+---
+
+## 🏆 실시간 온라인 랭킹 (Firebase Firestore) 연동 방법
+
+별도의 서버 구축 없이 Google의 무료 **Firebase Cloud Firestore**를 연동하면 전 세계 모든 학생/사용자가 실시간으로 랭킹을 공유할 수 있습니다.
+
+### 1단계: Firebase 프로젝트 생성 및 웹 앱 등록
+1. [Firebase 콘솔](https://console.firebase.google.com/)에 접속하여 Google 계정으로 로그인합니다.
+2. **[프로젝트 만들기]**를 클릭하고 프로젝트 이름(예: `sugar-balance-game`)을 입력하여 생성합니다.
+3. 프로젝트 개요 화면에서 **웹 아이콘 `</>`**을 클릭하여 웹 앱을 등록합니다.
+4. 화면에 나타나는 `firebaseConfig` 객체 코드를 복사합니다.
+
+### 2단계: Firestore Database 생성 및 보안 규칙 설정
+1. Firebase 콘솔 좌측 메뉴에서 **빌드 ➔ Firestore Database**를 선택하고 **데이터베이스 만들기**를 클릭합니다.
+2. 위치는 가까운 리전(예: `asia-northeast3` 서울)을 선택합니다.
+3. 보안 규칙 탭에서 읽기/쓰기가 가능하도록 규칙을 설정하고 **게시**를 누릅니다:
+   ```javascript
+   rules_version = '2';
+   service cloud.firestore {
+     match /databases/{database}/documents {
+       match /leaderboard_{difficulty}/{docId} {
+         // 누구나 랭킹을 조회하고 등록할 수 있도록 허용
+         allow read, write: if true;
+       }
+     }
+   }
+   ```
+
+### 3단계: `firebase-config.js`에 설정 붙여넣기
+프로젝트 루트 폴더의 `firebase-config.js` 상단 `firebaseConfig` 객체에 1단계에서 복사한 값을 입력합니다:
+```javascript
+const firebaseConfig = {
+  apiKey: "AIzaSy...",
+  authDomain: "sugar-game-xxxx.firebaseapp.com",
+  projectId: "sugar-game-xxxx",
+  storageBucket: "sugar-game-xxxx.appspot.com",
+  messagingSenderId: "123456789...",
+  appId: "1:123456789:web:xxxx"
+};
+```
+저장 후 배포(또는 브라우저 새로고침)하면 상단 랭킹창의 상태 뱃지가 `🟢 온라인 실시간 DB 연동됨`으로 바뀌며 온라인 랭킹이 활성화됩니다!
+
+*(※ 키를 입력하지 않아도 `🟡 로컬/데모 모드`로 브라우저 내에서 즉시 랭킹 등록과 테스트가 가능합니다.)*
 
 ---
 

@@ -7,6 +7,10 @@
   <link rel="preconnect" href="https://cdn.jsdelivr.net" crossorigin />
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/variable/pretendardvariable-dynamic-subset.min.css" />
   <link rel="stylesheet" href="style.css" />
+  <!-- Firebase SDK v10 Compat (Firestore 실시간 랭킹 DB) -->
+  <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore-compat.js"></script>
+  <script src="firebase-config.js"></script>
 </head>
 <body>
   <div class="app-shell">
@@ -46,6 +50,9 @@
       <div class="header-actions">
         <button type="button" class="btn btn-outline btn-sm" id="btnOpenMission" title="미션 이야기 및 4가지 규칙 보기">
           📜 미션·규칙
+        </button>
+        <button type="button" class="btn btn-primary btn-sm btn-ranking-top" id="btnOpenRanking" title="실시간 명예의 전당 랭킹 보기">
+          🏆 랭킹보드
         </button>
         <button type="button" class="btn btn-outline btn-sm" id="btnOpenRecords" title="상세 기록 보기 및 초기화">
           📊 기록장
@@ -411,6 +418,36 @@
           <!-- JS 렌더링 -->
         </div>
 
+        <!-- 🏆 명예의 전당 랭킹 등록 카드 -->
+        <div class="grade-ranking-box" id="gradeRankingBox">
+          <div class="ranking-box-header">
+            <span class="ranking-box-badge">🏆 명예의 전당 등록</span>
+            <span class="ranking-diff-badge" id="rankSubmitDiffBadge">표준 모드</span>
+          </div>
+          <p class="ranking-box-desc">
+            방금 달성한 해결 시간 <b id="rankSubmitTimeText">0.0초</b>, 조작 <b id="rankSubmitStepsText">0단계</b> 기록을 실시간 랭킹보드에 올려보세요!
+          </p>
+          <form id="rankSubmitForm" class="rank-submit-form" autocomplete="off">
+            <input
+              type="text"
+              id="rankNicknameInput"
+              class="rank-nickname-input"
+              maxlength="10"
+              placeholder="닉네임 입력 (2~10자, 예: 설탕천재)"
+              required
+            />
+            <button type="submit" class="btn btn-primary btn-sm" id="btnSubmitToRanking">
+              🏆 순위 등록하기
+            </button>
+          </form>
+          <div class="rank-submit-result hidden" id="rankSubmitResult">
+            <span id="rankSubmitSuccessMsg"></span>
+            <button type="button" class="btn btn-outline btn-xs" id="btnViewRankAfterSubmit" style="margin-top:4px;">
+              🏆 순위 확인하기
+            </button>
+          </div>
+        </div>
+
         <div class="solution-compare-grid">
           <div class="solution-col">
             <h3>🧑‍🎓 나의 저울 조작 풀이 과정</h3>
@@ -422,9 +459,12 @@
           </div>
         </div>
       </div>
-      <div class="modal-footer">
-        <button type="button" class="btn btn-outline" data-close-modal="gradingModal">현재 화면 보기</button>
-        <button type="button" class="btn btn-submit" id="btnNextProblemModal">🎲 다음 배달 문제 풀기 ➔</button>
+      <div class="modal-footer space-between">
+        <button type="button" class="btn btn-outline" id="btnOpenRankingFromGrading">🏆 랭킹보드 보기</button>
+        <div style="display:flex;gap:8px;">
+          <button type="button" class="btn btn-outline" data-close-modal="gradingModal">현재 화면 보기</button>
+          <button type="button" class="btn btn-submit" id="btnNextProblemModal">🎲 다음 배달 문제 풀기 ➔</button>
+        </div>
       </div>
     </div>
   </div>
@@ -503,6 +543,76 @@
       <div class="modal-footer space-between">
         <button type="button" class="btn btn-outline" id="btnRetryTimeover">🔄 이 문제 다시 도전</button>
         <button type="button" class="btn btn-submit" id="btnNextTimeover">🎲 새 문제 도전하기 ➔</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- [모달 5] 명예의 전당 실시간 랭킹보드 모달 (Firebase Firestore 연동) -->
+  <div class="modal-backdrop hidden" id="rankingModal" role="dialog" aria-modal="true" aria-labelledby="rankingModalTitle">
+    <div class="modal-box ranking-modal-box">
+      <div class="modal-header ranking-modal-header">
+        <div class="ranking-title-group">
+          <span class="ranking-trophy-icon">🏆</span>
+          <div>
+            <h2 id="rankingModalTitle">설탕 배달 명예의 전당</h2>
+            <span class="ranking-sub-desc">등식의 성질 타임어택 실시간 랭킹 (해결 시간 빠른 순)</span>
+          </div>
+        </div>
+        <button type="button" class="modal-close" data-close-modal="rankingModal" aria-label="닫기">✕</button>
+      </div>
+
+      <div class="modal-body">
+        <!-- 랭킹 상단 컨트롤 & 난이도 탭 -->
+        <div class="ranking-top-bar">
+          <div class="ranking-tabs" role="tablist" aria-label="랭킹 난이도 탭">
+            <button type="button" class="ranking-tab" data-rank-diff="basic" role="tab">
+              🌟 기초 (30초)
+            </button>
+            <button type="button" class="ranking-tab active" data-rank-diff="standard" role="tab">
+              ⚡ 표준 (40초)
+            </button>
+            <button type="button" class="ranking-tab" data-rank-diff="challenge" role="tab">
+              🔥 심화 (1분)
+            </button>
+          </div>
+          <div class="ranking-meta-actions">
+            <span class="cloud-status-pill" id="cloudStatusPill" title="실시간 DB 상태">
+              <span class="status-dot"></span> <span id="cloudStatusText">연결 확인 중</span>
+            </span>
+            <button type="button" class="btn btn-ghost btn-xs" id="btnRefreshRanking" title="실시간 순위 새로고침">
+              🔄 새로고침
+            </button>
+          </div>
+        </div>
+
+        <!-- 랭킹 리스트 컨테이너 -->
+        <div class="ranking-table-wrap">
+          <table class="ranking-table">
+            <thead>
+              <tr>
+                <th style="width:60px;">순위</th>
+                <th>닉네임</th>
+                <th>해결 시간</th>
+                <th>조작 단계</th>
+                <th>출제 문제</th>
+                <th>등록 일시</th>
+              </tr>
+            </thead>
+            <tbody id="rankingTableBody">
+              <!-- JS에서 동적 렌더링 -->
+            </tbody>
+          </table>
+        </div>
+
+        <!-- Firebase 안내 푸터 팁 -->
+        <div class="ranking-firebase-tip" id="rankingFirebaseTip">
+          <span>💡 <b>Firebase Firestore 연동 지원</b>: 실시간 클라우드 DB를 통해 전 세계 친구들과 순위를 겨뤄보세요!</span>
+        </div>
+      </div>
+
+      <div class="modal-footer space-between">
+        <button type="button" class="btn btn-outline" data-close-modal="rankingModal">닫기</button>
+        <button type="button" class="btn btn-primary" id="btnPlayFromRanking">🚀 나도 도전하러 가기!</button>
       </div>
     </div>
   </div>
