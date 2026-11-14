@@ -36,7 +36,7 @@
         </div>
         <div class="stat-pill current-timer time-attack-pill" id="timerPill" title="스테이지 제한 시간 카운트다운">
           <span class="stat-label">⏱️ 남은 시간</span>
-          <strong class="stat-value" id="currentTimer">40.0초</strong>
+          <strong class="stat-value" id="currentTimer">60.0초</strong>
           <div class="timer-gauge-bg" aria-hidden="true">
             <div class="timer-gauge-fill" id="timerGaugeFill" style="width: 100%;"></div>
           </div>
@@ -69,13 +69,13 @@
         <span class="toolbar-label">출제 모드</span>
         <div class="difficulty-tabs" role="tablist" aria-label="난이도 선택">
           <button type="button" class="diff-tab" data-diff="basic" role="tab" aria-selected="false">
-            기초 <span class="diff-timer-tag">30초</span>
+            기초 <span class="diff-timer-tag">40초</span>
           </button>
           <button type="button" class="diff-tab active" data-diff="standard" role="tab" aria-selected="true">
-            표준 <span class="diff-timer-tag">40초</span>
+            기본 <span class="diff-timer-tag">1분</span>
           </button>
           <button type="button" class="diff-tab" data-diff="challenge" role="tab" aria-selected="false">
-            심화 <span class="diff-timer-tag">1분</span>
+            심화 <span class="diff-timer-tag">1분 20초</span>
           </button>
         </div>
         <button type="button" class="btn btn-secondary btn-sm" id="btnNewProblem">
@@ -403,7 +403,7 @@
           </div>
           <div class="howto-step">
             <strong>3️⃣ 비율 조절 & 타임어택</strong>
-            <span><b>÷2, ÷3</b> 등으로 포대 1개만 남기세요! <b>기초 30초 / 표준 40초 / 심화 1분</b> 안에 해결해야 합니다!</span>
+            <span><b>÷2, ÷3</b> 등으로 포대 1개만 남기세요! <b>기초 40초 / 기본 1분 / 심화 1분 20초</b> 안에 해결해야 합니다!</span>
           </div>
         </div>
       </div>
@@ -552,13 +552,13 @@
         <div class="ranking-top-bar">
           <div class="ranking-tabs" role="tablist" aria-label="랭킹 난이도 탭">
             <button type="button" class="ranking-tab" data-rank-diff="basic" role="tab">
-              🌟 기초 (30초)
+              🌟 기초 (40초)
             </button>
             <button type="button" class="ranking-tab active" data-rank-diff="standard" role="tab">
-              ⚡ 표준 (40초)
+              ⚡ 기본 (1분)
             </button>
             <button type="button" class="ranking-tab" data-rank-diff="challenge" role="tab">
-              🔥 심화 (1분)
+              🔥 심화 (1분 20초)
             </button>
           </div>
           <div class="ranking-meta-actions">

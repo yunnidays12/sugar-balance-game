@@ -1,0 +1,1022 @@
+/* ========================================================
+   🧪 설탕 장수 지훈이의 특제 설탕물 연구소 (농도 맞추기 게임)
+   설탕물 농도 & 등식의 성질(곱셈·나눗셈) 교육용 스타일시트
+   ======================================================== */
+
+:root {
+  --c-primary: #3b82f6;
+  --c-primary-hover: #2563eb;
+  --c-primary-soft: #eff6ff;
+  --c-sugar: #f59e0b;
+  --c-sugar-hover: #d97706;
+  --c-sugar-soft: #fef3c7;
+  --c-water: #0ea5e9;
+  --c-water-hover: #0284c7;
+  --c-water-soft: #e0f2fe;
+  --c-success: #10b981;
+  --c-success-soft: #ecfdf5;
+  --c-danger: #ef4444;
+  --c-danger-soft: #fef2f2;
+  --c-neutral-bg: #f8fafc;
+  --c-card-bg: #ffffff;
+  --c-border: #e2e8f0;
+  --c-text-main: #0f172a;
+  --c-text-muted: #64748b;
+  --c-gold: #f59e0b;
+  --shadow-sm: 0 1px 2px 0 rgb(0 0 0 / 0.05);
+  --shadow-md: 0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1);
+  --shadow-lg: 0 10px 15px -3px rgb(0 0 0 / 0.1), 0 4px 6px -4px rgb(0 0 0 / 0.1);
+  --shadow-glow: 0 0 25px rgba(245, 158, 11, 0.35);
+  --radius-lg: 18px;
+  --radius-md: 12px;
+  --radius-sm: 8px;
+  --font-family: "Pretendard Variable", -apple-system, BlinkMacSystemFont, system-ui, Roboto, sans-serif;
+}
+
+/* =========================================
+   상단 모드 스위처 (탭 전환 바)
+   ========================================= */
+.app-mode-switcher {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  background: #f1f5f9;
+  padding: 6px;
+  border-radius: 9999px;
+  margin: 0 auto 12px auto;
+  max-width: 580px;
+  border: 1px solid #cbd5e1;
+}
+
+.mode-switch-btn {
+  flex: 1;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  padding: 8px 16px;
+  font-size: 0.95rem;
+  font-weight: 700;
+  color: #475569;
+  background: transparent;
+  border: none;
+  border-radius: 9999px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  white-space: nowrap;
+}
+
+.mode-switch-btn:hover {
+  color: #0f172a;
+  background: rgba(255, 255, 255, 0.6);
+}
+
+.mode-switch-btn.active {
+  background: #ffffff;
+  color: #0284c7;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+}
+
+.mode-switch-btn .mode-tag {
+  font-size: 0.72rem;
+  background: #e0f2fe;
+  color: #0369a1;
+  padding: 2px 7px;
+  border-radius: 9999px;
+  font-weight: 800;
+}
+
+.mode-switch-btn.active .mode-tag.new {
+  background: #fef3c7;
+  color: #b45309;
+}
+
+/* =========================================
+   설탕물 연구소 메인 컨테이너
+   ========================================= */
+#concentrationGameContainer {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  width: 100%;
+  animation: fadeIn 0.3s ease-out;
+}
+
+#concentrationGameContainer.hidden {
+  display: none !important;
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(6px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+/* 툴바: 문제 번호 및 힌트 */
+.conc-toolbar {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  background: #ffffff;
+  border: 1px solid var(--c-border);
+  border-radius: var(--radius-md);
+  padding: 12px 18px;
+  box-shadow: var(--shadow-sm);
+}
+
+.conc-mission-banner {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.conc-badge {
+  background: linear-gradient(135deg, #0ea5e9, #3b82f6);
+  color: #ffffff;
+  font-weight: 800;
+  font-size: 0.82rem;
+  padding: 4px 10px;
+  border-radius: 6px;
+  letter-spacing: -0.01em;
+}
+
+.conc-goal-text {
+  font-size: 1.02rem;
+  color: #1e293b;
+  font-weight: 600;
+}
+
+.conc-goal-text strong {
+  color: #0284c7;
+}
+
+/* =========================================
+   등식의 성질 시각화 배너 (핵심 원리)
+   ========================================= */
+.property-banner-card {
+  background: linear-gradient(135deg, #f0fdf4 0%, #ecfdf5 100%);
+  border: 1.5px dashed #86efac;
+  border-radius: var(--radius-md);
+  padding: 12px 20px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  position: relative;
+  overflow: hidden;
+}
+
+.property-banner-content {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  flex-wrap: wrap;
+}
+
+.property-icon-box {
+  width: 40px;
+  height: 40px;
+  border-radius: 10px;
+  background: #dcfce7;
+  color: #15803d;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.35rem;
+  flex-shrink: 0;
+}
+
+.property-text-group {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.property-title {
+  font-size: 0.88rem;
+  font-weight: 800;
+  color: #166534;
+  letter-spacing: -0.01em;
+}
+
+.property-desc {
+  font-size: 0.95rem;
+  font-weight: 600;
+  color: #1e293b;
+}
+
+.property-formula-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  background: #ffffff;
+  padding: 4px 10px;
+  border-radius: 8px;
+  font-weight: 700;
+  color: #047857;
+  font-size: 0.85rem;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+  border: 1px solid #bbf7d0;
+}
+
+.btn-toggle-hint {
+  font-size: 0.82rem;
+  padding: 6px 12px;
+  border-radius: 8px;
+  background: #ffffff;
+  color: #15803d;
+  border: 1px solid #86efac;
+  cursor: pointer;
+  font-weight: 700;
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  transition: all 0.2s;
+  white-space: nowrap;
+}
+
+.btn-toggle-hint:hover {
+  background: #dcfce7;
+}
+
+/* =========================================
+   비커 스테이지 (좌우 비커 + 중앙 게이지)
+   ========================================= */
+.beaker-arena-card {
+  background: #ffffff;
+  border: 1px solid var(--c-border);
+  border-radius: var(--radius-lg);
+  padding: 24px;
+  box-shadow: var(--shadow-md);
+  position: relative;
+}
+
+.beaker-arena-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 20px;
+  border-bottom: 1px solid #f1f5f9;
+  padding-bottom: 12px;
+}
+
+.arena-title {
+  font-size: 1.15rem;
+  font-weight: 800;
+  color: #0f172a;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.beaker-layout-row {
+  display: grid;
+  grid-template-columns: 1fr auto 1fr;
+  gap: 20px;
+  align-items: center;
+}
+
+@media (max-width: 860px) {
+  .beaker-layout-row {
+    grid-template-columns: 1fr;
+    gap: 24px;
+  }
+}
+
+/* 개별 비커 스테이션 */
+.beaker-station {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  background: #f8fafc;
+  border: 1.5px solid #e2e8f0;
+  border-radius: var(--radius-md);
+  padding: 16px;
+  position: relative;
+  transition: border-color 0.2s;
+}
+
+.beaker-station.target-station {
+  background: #fffbeb;
+  border-color: #fde68a;
+}
+
+.beaker-station.player-station {
+  background: #f0f9ff;
+  border-color: #bae6fd;
+}
+
+.beaker-badge-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 0.85rem;
+  font-weight: 800;
+  padding: 4px 12px;
+  border-radius: 9999px;
+  margin-bottom: 12px;
+}
+
+.beaker-station.target-station .beaker-badge-pill {
+  background: #f59e0b;
+  color: #ffffff;
+}
+
+.beaker-station.player-station .beaker-badge-pill {
+  background: #0284c7;
+  color: #ffffff;
+}
+
+/* =========================================
+   비커 그래픽 비주얼 (유리 실린더 & 액체)
+   ========================================= */
+.beaker-visual-wrapper {
+  position: relative;
+  width: 200px;
+  height: 260px;
+  display: flex;
+  justify-content: center;
+  align-items: flex-end;
+  margin: 10px 0 16px 0;
+}
+
+/* 실제 비커 외형 */
+.glass-beaker {
+  position: relative;
+  width: 170px;
+  height: 230px;
+  background: rgba(255, 255, 255, 0.45);
+  border: 4px solid #64748b;
+  border-top: none;
+  border-radius: 0 0 20px 20px;
+  box-shadow: inset 0 0 16px rgba(100, 116, 139, 0.15), 0 8px 16px rgba(0, 0, 0, 0.06);
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-end;
+}
+
+/* 비커 상단 입구 림 */
+.glass-beaker::before {
+  content: "";
+  position: absolute;
+  top: 0;
+  left: -8px;
+  right: -8px;
+  height: 8px;
+  background: #64748b;
+  border-radius: 4px;
+}
+
+/* 비커 좌측 주둥이(Spout) */
+.glass-beaker::after {
+  content: "";
+  position: absolute;
+  top: 0;
+  left: -14px;
+  width: 14px;
+  height: 12px;
+  border-bottom: 4px solid #64748b;
+  border-right: 4px solid #64748b;
+  transform: skewX(-35deg);
+}
+
+/* 유리 반사광 하이라이트 */
+.beaker-glass-shine {
+  position: absolute;
+  top: 10px;
+  left: 12px;
+  bottom: 20px;
+  width: 12px;
+  background: linear-gradient(to right, rgba(255, 255, 255, 0.8), rgba(255, 255, 255, 0.1));
+  border-radius: 6px;
+  pointer-events: none;
+  z-index: 5;
+}
+
+/* 눈금선 */
+.beaker-tick-layer {
+  position: absolute;
+  top: 20px;
+  bottom: 20px;
+  right: 0;
+  width: 50px;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  pointer-events: none;
+  z-index: 6;
+  font-family: monospace;
+  font-size: 0.65rem;
+  font-weight: 700;
+  color: #475569;
+}
+
+.tick-line {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 4px;
+  width: 100%;
+  padding-right: 6px;
+}
+
+.tick-line::before {
+  content: "";
+  display: inline-block;
+  height: 2px;
+  background: #64748b;
+  width: 12px;
+}
+
+.tick-line.major::before {
+  width: 20px;
+  height: 2.5px;
+  background: #334155;
+}
+
+/* 비커 내부 액체 */
+.liquid-body {
+  position: relative;
+  width: 100%;
+  height: 40%; /* 동적으로 % 조절 */
+  background: rgba(96, 165, 250, 0.45);
+  transition: height 0.35s cubic-bezier(0.34, 1.56, 0.64, 1), background-color 0.4s ease;
+  overflow: hidden;
+  min-height: 4px;
+}
+
+/* 액체 표면 물결 */
+.liquid-surface-wave {
+  position: absolute;
+  top: -6px;
+  left: 0;
+  width: 200%;
+  height: 12px;
+  background: radial-gradient(ellipse at center, rgba(255, 255, 255, 0.6) 0%, rgba(255, 255, 255, 0) 70%);
+  animation: waveMotion 2.5s infinite linear;
+}
+
+@keyframes waveMotion {
+  0% { transform: translateX(0); }
+  50% { transform: translateX(-25%); }
+  100% { transform: translateX(0); }
+}
+
+/* 바닥에 가라앉은 설탕 알갱이 시각화 */
+.sugar-sediment {
+  position: absolute;
+  bottom: 0;
+  left: 10px;
+  right: 10px;
+  height: 8px;
+  background: radial-gradient(circle, rgba(255, 255, 255, 0.9) 20%, rgba(254, 240, 138, 0.8) 70%);
+  border-radius: 10px 10px 0 0;
+  opacity: 0;
+  transition: opacity 0.3s ease, height 0.3s ease;
+}
+
+.sugar-sediment.visible {
+  opacity: 0.9;
+}
+
+/* 파티클 이펙트 (설탕 가루 / 물방울 떨어짐) */
+.particle-drop-zone {
+  position: absolute;
+  top: -20px;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 60px;
+  height: 80px;
+  pointer-events: none;
+  overflow: visible;
+  z-index: 10;
+}
+
+.drop-particle {
+  position: absolute;
+  animation: dropParticle 0.45s ease-in forwards;
+}
+
+@keyframes dropParticle {
+  0% { opacity: 1; transform: translateY(0) scale(1); }
+  80% { opacity: 1; }
+  100% { opacity: 0; transform: translateY(70px) scale(0.6); }
+}
+
+/* 비커 받침대 (디지털 저울 스타일) */
+.beaker-pedestal {
+  width: 190px;
+  height: 16px;
+  background: #334155;
+  border-radius: 4px 4px 8px 8px;
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.15);
+  position: relative;
+}
+
+.beaker-pedestal::after {
+  content: "";
+  position: absolute;
+  top: 4px;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 80px;
+  height: 4px;
+  background: #64748b;
+  border-radius: 2px;
+}
+
+/* 비커 수치 데이터 판독기 */
+.beaker-data-card {
+  width: 100%;
+  background: #ffffff;
+  border: 1px solid #e2e8f0;
+  border-radius: var(--radius-sm);
+  padding: 10px 14px;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  box-shadow: var(--shadow-sm);
+}
+
+.beaker-data-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-size: 0.9rem;
+}
+
+.beaker-data-label {
+  color: var(--c-text-muted);
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  font-weight: 600;
+}
+
+.beaker-data-value {
+  font-weight: 800;
+  color: #1e293b;
+  font-variant-numeric: tabular-nums;
+}
+
+.beaker-data-value.sugar-val {
+  color: #d97706;
+}
+
+.beaker-data-value.water-val {
+  color: #0284c7;
+}
+
+.beaker-data-value.conc-val {
+  color: #10b981;
+  font-size: 1rem;
+}
+
+.beaker-data-value.unsolved {
+  color: #ef4444;
+  background: #fef2f2;
+  padding: 1px 8px;
+  border-radius: 6px;
+  border: 1px dashed #fca5a5;
+}
+
+/* =========================================
+   중앙 농도 비교계 (굴절계 / 맛 센서)
+   ========================================= */
+.center-comparator {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+  padding: 12px;
+}
+
+.refractometer-meter {
+  width: 170px;
+  background: #ffffff;
+  border: 2px solid #cbd5e1;
+  border-radius: var(--radius-md);
+  padding: 12px;
+  box-shadow: var(--shadow-sm);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+}
+
+.meter-header {
+  font-size: 0.8rem;
+  font-weight: 800;
+  color: #475569;
+  letter-spacing: -0.01em;
+}
+
+.meter-scale-visual {
+  position: relative;
+  width: 100%;
+  height: 24px;
+  background: linear-gradient(to right, #93c5fd 0%, #86efac 50%, #fde047 75%, #fca5a5 100%);
+  border-radius: 9999px;
+  border: 1px solid #94a3b8;
+  overflow: hidden;
+}
+
+.meter-center-mark {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  left: 50%;
+  width: 2px;
+  background: #0f172a;
+  transform: translateX(-50%);
+  z-index: 2;
+}
+
+.meter-needle {
+  position: absolute;
+  top: 2px;
+  bottom: 2px;
+  left: 50%;
+  width: 8px;
+  background: #0f172a;
+  border-radius: 4px;
+  transform: translateX(-50%);
+  transition: left 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.3);
+  z-index: 3;
+}
+
+.meter-needle::before {
+  content: "";
+  position: absolute;
+  top: -3px;
+  left: 50%;
+  transform: translateX(-50%);
+  border-left: 4px solid transparent;
+  border-right: 4px solid transparent;
+  border-bottom: 5px solid #0f172a;
+}
+
+.meter-status-pill {
+  font-size: 0.82rem;
+  font-weight: 800;
+  padding: 4px 10px;
+  border-radius: 9999px;
+  text-align: center;
+  background: #f1f5f9;
+  color: #475569;
+  transition: all 0.25s ease;
+}
+
+.meter-status-pill.matched {
+  background: #ecfdf5;
+  color: #059669;
+  box-shadow: 0 0 10px rgba(16, 185, 129, 0.3);
+}
+
+.meter-status-pill.too-dilute {
+  background: #e0f2fe;
+  color: #0369a1;
+}
+
+.meter-status-pill.too-sweet {
+  background: #fef3c7;
+  color: #b45309;
+}
+
+/* =========================================
+   하단 조작 패널 (물/설탕 추가/제거 버튼)
+   ========================================= */
+.conc-control-deck {
+  background: #ffffff;
+  border: 1px solid var(--c-border);
+  border-radius: var(--radius-lg);
+  padding: 20px;
+  box-shadow: var(--shadow-md);
+  display: flex;
+  flex-direction: column;
+  gap: 18px;
+}
+
+.deck-section-title {
+  font-size: 1.05rem;
+  font-weight: 800;
+  color: #0f172a;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.control-rows-container {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 20px;
+}
+
+@media (max-width: 780px) {
+  .control-rows-container {
+    grid-template-columns: 1fr;
+  }
+}
+
+/* 물 / 설탕 조작 유닛 카드 */
+.ingredient-control-card {
+  border: 1.5px solid #e2e8f0;
+  border-radius: var(--radius-md);
+  padding: 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  background: #f8fafc;
+  transition: border-color 0.2s, box-shadow 0.2s;
+}
+
+.ingredient-control-card.water-ctrl {
+  border-color: #bae6fd;
+  background: #f0f9ff;
+}
+
+.ingredient-control-card.sugar-ctrl {
+  border-color: #fde68a;
+  background: #fffbeb;
+}
+
+.ing-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.ing-name {
+  font-size: 1rem;
+  font-weight: 800;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.water-ctrl .ing-name { color: #0284c7; }
+.sugar-ctrl .ing-name { color: #b45309; }
+
+.ing-current-val {
+  font-size: 1.25rem;
+  font-weight: 900;
+  font-variant-numeric: tabular-nums;
+}
+
+.water-ctrl .ing-current-val { color: #0369a1; }
+.sugar-ctrl .ing-current-val { color: #92400e; }
+
+/* 스테퍼 & 퀵 버튼 */
+.stepper-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.btn-step-main {
+  flex: 1;
+  height: 48px;
+  border-radius: 10px;
+  font-size: 1.25rem;
+  font-weight: 900;
+  border: none;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  transition: transform 0.1s, background-color 0.15s, box-shadow 0.15s;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.08);
+}
+
+.btn-step-main:active {
+  transform: scale(0.97);
+}
+
+.btn-step-main.btn-minus {
+  background: #ffffff;
+  color: #475569;
+  border: 1.5px solid #cbd5e1;
+}
+
+.btn-step-main.btn-minus:hover {
+  background: #f1f5f9;
+  color: #0f172a;
+}
+
+.water-ctrl .btn-step-main.btn-plus {
+  background: #0ea5e9;
+  color: #ffffff;
+}
+
+.water-ctrl .btn-step-main.btn-plus:hover {
+  background: #0284c7;
+}
+
+.sugar-ctrl .btn-step-main.btn-plus {
+  background: #f59e0b;
+  color: #ffffff;
+}
+
+.sugar-ctrl .btn-step-main.btn-plus:hover {
+  background: #d97706;
+}
+
+/* 퀵 버튼 그룹 */
+.quick-buttons-row {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 6px;
+}
+
+.btn-quick {
+  padding: 8px 4px;
+  border-radius: 8px;
+  font-size: 0.82rem;
+  font-weight: 700;
+  border: 1px solid #cbd5e1;
+  background: #ffffff;
+  color: #334155;
+  cursor: pointer;
+  transition: all 0.15s;
+  text-align: center;
+}
+
+.btn-quick:hover {
+  background: #f1f5f9;
+  border-color: #94a3b8;
+}
+
+.btn-quick:active {
+  transform: translateY(1px);
+}
+
+.btn-quick.quick-plus {
+  font-weight: 800;
+}
+
+.water-ctrl .btn-quick.quick-plus {
+  color: #0284c7;
+  border-color: #7dd3fc;
+  background: #f0f9ff;
+}
+
+.sugar-ctrl .btn-quick.quick-plus {
+  color: #d97706;
+  border-color: #fcd34d;
+  background: #fffbeb;
+}
+
+/* 등식의 성질 퀵 배율 도우미 액션 */
+.ratio-helper-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  background: #f8fafc;
+  border: 1px solid #e2e8f0;
+  border-radius: var(--radius-md);
+  padding: 10px 16px;
+  flex-wrap: wrap;
+}
+
+.ratio-helper-label {
+  font-size: 0.85rem;
+  font-weight: 700;
+  color: #475569;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.ratio-chip-group {
+  display: flex;
+  gap: 6px;
+  flex-wrap: wrap;
+}
+
+.btn-ratio-chip {
+  padding: 4px 10px;
+  border-radius: 6px;
+  background: #ffffff;
+  border: 1px solid #cbd5e1;
+  font-size: 0.82rem;
+  font-weight: 700;
+  color: #0f172a;
+  cursor: pointer;
+  transition: all 0.15s;
+}
+
+.btn-ratio-chip:hover {
+  border-color: #0ea5e9;
+  background: #e0f2fe;
+  color: #0369a1;
+}
+
+/* 하단 최종 제출 및 액션 버튼 */
+.submit-action-row {
+  display: flex;
+  gap: 12px;
+  align-items: center;
+  justify-content: flex-end;
+}
+
+.btn-submit-solution {
+  flex: 1;
+  height: 52px;
+  border-radius: 12px;
+  background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+  color: #ffffff;
+  font-size: 1.15rem;
+  font-weight: 900;
+  border: none;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  box-shadow: 0 4px 12px rgba(16, 185, 129, 0.3);
+  transition: all 0.2s ease;
+}
+
+.btn-submit-solution:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 6px 16px rgba(16, 185, 129, 0.4);
+}
+
+.btn-submit-solution:active {
+  transform: translateY(0);
+}
+
+/* =========================================
+   등식의 성질 상세 팝업 / 해설 카드
+   ========================================= */
+.explanation-modal-body {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.explanation-highlight-box {
+  background: #ecfdf5;
+  border: 1.5px solid #a7f3d0;
+  border-radius: var(--radius-md);
+  padding: 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.exp-rule-title {
+  font-size: 1.05rem;
+  font-weight: 800;
+  color: #065f46;
+}
+
+.exp-rule-text {
+  font-size: 0.95rem;
+  color: #1e293b;
+  line-height: 1.55;
+}
+
+.exp-math-comparison {
+  display: grid;
+  grid-template-columns: 1fr auto 1fr;
+  gap: 12px;
+  align-items: center;
+  background: #ffffff;
+  border: 1px solid #cbd5e1;
+  border-radius: var(--radius-sm);
+  padding: 12px;
+  margin-top: 6px;
+}
+
+.exp-math-col {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+}
+
+.exp-math-label {
+  font-size: 0.78rem;
+  font-weight: 700;
+  color: #64748b;
+}
+
+.exp-math-val {
+  font-size: 1.1rem;
+  font-weight: 800;
+  color: #0f172a;
+}
+
+.exp-math-arrow {
+  font-size: 1.4rem;
+  color: #10b981;
+  font-weight: 900;
+}

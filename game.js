@@ -89,9 +89,9 @@
 
   // 각 난이도(스테이지)별 타임어택 제한 시간 (초)
   const STAGE_LIMITS = {
-    basic: 30, // 기초단계: 총 30초
-    standard: 40, // 표준: 40초
-    challenge: 60, // 심화: 1분(60초)
+    basic: 40, // 기초단계: 40초
+    standard: 60, // 기본(표준): 1분(60초)
+    challenge: 80, // 심화: 1분 20초(80초)
   };
 
   // =========================
@@ -221,8 +221,8 @@
     isPaused: false,   // 모달 열림 시 일시정지
 
     // 타임어택 타이머 관련
-    totalTimeSec: 40,
-    remainingSec: 40,
+    totalTimeSec: 60,
+    remainingSec: 60,
     startTimeMs: Date.now(),
     elapsedSec: 0,
     timerInterval: null,
@@ -454,7 +454,7 @@
       } else {
         // 아직 출발하기 버튼을 누르기 전: 타이머는 멈춘 상태로 준비 시간만 표시
         if (state.timerInterval) clearInterval(state.timerInterval);
-        state.totalTimeSec = STAGE_LIMITS[state.difficulty] || 40;
+        state.totalTimeSec = STAGE_LIMITS[state.difficulty] || 60;
         state.remainingSec = state.totalTimeSec;
         state.elapsedSec = 0;
         updateTimerDisplay();
@@ -466,7 +466,7 @@
 
   function startTimer() {
     if (state.timerInterval) clearInterval(state.timerInterval);
-    state.totalTimeSec = STAGE_LIMITS[state.difficulty] || 40;
+    state.totalTimeSec = STAGE_LIMITS[state.difficulty] || 60;
     state.remainingSec = state.totalTimeSec;
     state.startTimeMs = Date.now();
     state.elapsedSec = 0;
@@ -564,9 +564,9 @@
     });
 
     const diffNames = {
-      basic: "기초 단계 (30초)",
-      standard: "표준 단계 (40초)",
-      challenge: "심화 단계 (1분)",
+      basic: "기초 단계 (40초)",
+      standard: "기본 단계 (1분)",
+      challenge: "심화 단계 (1분 20초)",
     };
 
     el.timeoverSubText.textContent = `${diffNames[state.difficulty] || "타임어택"}의 제한 시간(${state.totalTimeSec}초)이 모두 지났습니다!`;
@@ -991,7 +991,7 @@
     }
 
     const baseScore = 100;
-    const limit = STAGE_LIMITS[state.difficulty] || 40;
+    const limit = STAGE_LIMITS[state.difficulty] || 60;
     const speedRatio = Math.max(0, Math.min(1, state.remainingSec / limit));
     const speedBonus = Math.round(speedRatio * 100);
     const totalEarned = baseScore + speedBonus;
@@ -1904,9 +1904,9 @@
       sfx.correct();
 
       const diffNames = {
-        basic: "기초 단계 (30초)",
-        standard: "표준 단계 (40초)",
-        challenge: "심화 단계 (1분)",
+        basic: "기초 단계 (40초)",
+        standard: "기본 단계 (1분)",
+        challenge: "심화 단계 (1분 20초)",
       };
 
       if (el.stageFinalScore) {
