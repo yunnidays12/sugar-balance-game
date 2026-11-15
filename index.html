@@ -3,24 +3,37 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no" />
-  <title>설탕 장수 지훈이의 설탕 배달 - 등식의 성질 교육용 게임</title>
+  <title>설탕 장수 지훈이의 특제 설탕물 연구소 & 설탕 배달 - 등식의 성질 교육용 게임</title>
   <link rel="preconnect" href="https://cdn.jsdelivr.net" crossorigin />
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/variable/pretendardvariable-dynamic-subset.min.css" />
   <link rel="stylesheet" href="style.css" />
+  <link rel="stylesheet" href="concentration-style.css" />
   <!-- Firebase SDK v10 Compat (Firestore 실시간 랭킹 DB) -->
   <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-app-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore-compat.js"></script>
-  <script src="firebase-config.js"></script>
+  <script src="firebase-config.js?v=20261114_admin"></script>
 </head>
 <body>
   <div class="app-shell">
+    <!-- 모드 스위처 (1번째: 설탕장수 게임, 2번째: 설탕물 농도 맞추기 게임) -->
+    <nav class="app-mode-switcher" aria-label="게임 모드 선택">
+      <button type="button" class="mode-switch-btn active" id="btnModeScale">
+        <span>⚖️ 어깨 저울 방정식</span>
+        <span class="mode-tag">설탕 장수 배달</span>
+      </button>
+      <button type="button" class="mode-switch-btn" id="btnModeConcentration">
+        <span>🧪 설탕물 농도 맞추기</span>
+        <span class="mode-tag new">특제 설탕물 연구소</span>
+      </button>
+    </nav>
+
     <!-- 상단 헤더 & 기록 저장 대시보드 (조건 5) -->
     <header class="top-header">
       <div class="brand-area">
-        <div class="brand-badge" aria-hidden="true">⚖️</div>
+        <div class="brand-badge" id="appBrandBadge" aria-hidden="true">⚖️</div>
         <div>
-          <div class="eyebrow">[Mission!] 등식의 성질 탐구 게임</div>
-          <h1 class="game-title">설탕 장수 지훈이의 설탕 배달</h1>
+          <div class="eyebrow" id="appEyebrow">[Mission!] 등식의 성질 탐구 게임</div>
+          <h1 class="game-title" id="appGameTitle">설탕 장수 지훈이의 설탕 배달</h1>
         </div>
       </div>
 
@@ -64,18 +77,18 @@
     </header>
 
     <!-- 상단 컨트롤 바: 난이도 & 랜덤 문제 생성 (조건 1) -->
-    <section class="problem-toolbar" aria-label="문제 출제 및 수식 현황">
+    <section class="problem-toolbar" id="scaleToolbar" aria-label="문제 출제 및 수식 현황">
       <div class="toolbar-left">
         <span class="toolbar-label">출제 모드</span>
         <div class="difficulty-tabs" role="tablist" aria-label="난이도 선택">
           <button type="button" class="diff-tab" data-diff="basic" role="tab" aria-selected="false">
-            기초 <span class="diff-timer-tag">40초</span>
+            기초 <span class="diff-timer-tag">30초</span>
           </button>
           <button type="button" class="diff-tab active" data-diff="standard" role="tab" aria-selected="true">
-            기본 <span class="diff-timer-tag">1분</span>
+            표준 <span class="diff-timer-tag">40초</span>
           </button>
           <button type="button" class="diff-tab" data-diff="challenge" role="tab" aria-selected="false">
-            심화 <span class="diff-timer-tag">1분 20초</span>
+            심화 <span class="diff-timer-tag">1분</span>
           </button>
         </div>
         <button type="button" class="btn btn-secondary btn-sm" id="btnNewProblem">
@@ -95,8 +108,246 @@
       </div>
     </section>
 
-    <!-- 메인 게임 스테이지 -->
-    <main class="main-layout">
+    <!-- 🧪 설탕물 농도 맞추기 게임 메인 컨테이너 (신규 미션) -->
+    <section id="concentrationGameContainer" class="hidden" aria-label="설탕물 농도 연구소">
+      <!-- 난이도 툴바 및 새 문제 버튼 -->
+      <div class="conc-toolbar">
+        <div class="conc-mission-banner">
+          <span class="conc-badge">🧪 오늘의 연구 미션</span>
+          <span class="conc-goal-text" id="concGoalText">
+            왼쪽 비커에 <strong>물 100g</strong>이 채워져 있습니다. 하단 버튼으로 <strong>설탕</strong>을 조절하여 오른쪽 비커와 <strong>동일한 농도</strong>를 완성하세요!
+          </span>
+        </div>
+        <div style="display:flex; gap:8px;">
+          <button type="button" class="btn btn-secondary btn-sm" id="btnConcNewProblem">🎲 새 문제</button>
+          <button type="button" class="btn btn-ghost btn-sm" id="btnConcReset">🔄 비커 초기화</button>
+        </div>
+      </div>
+
+      <!-- 등식의 성질 시각화 배너 (규칙 5번 핵심!) -->
+      <div class="property-banner-card" id="propertyBannerCard">
+        <div class="property-banner-content">
+          <div class="property-icon-box">💡</div>
+          <div class="property-text-group">
+            <div class="property-title" id="propertyRuleTitle">등식의 성질 [규칙 4 - 나눗셈의 성질] 탐구</div>
+            <div class="property-desc" id="propertyRuleDesc">
+              오른쪽 비커의 물(200g)에 비해 왼쪽의 물(100g)이 ÷ 2배입니다. 등식의 성질에 따라 설탕(40g)도 똑같이 ÷ 2를 해주면 농도가 같아집니다!
+            </div>
+          </div>
+        </div>
+        <div style="display:flex; align-items:center; gap:8px;">
+          <div class="property-formula-pill" id="propertyFormulaPill">
+            물: 200g ÷ 2 = 100g ➔ 설탕: 40g ÷ 2 = 20g
+          </div>
+          <button type="button" class="btn-toggle-hint" id="btnToggleHint">💡 힌트 접기</button>
+        </div>
+      </div>
+
+      <!-- 비커 실험대 (좌우 비커 + 중앙 굴절계) -->
+      <div class="beaker-arena-card">
+        <div class="beaker-arena-header">
+          <div class="arena-title">
+            <span>🧪 농도 맞추기 실험대</span>
+            <small style="font-size:0.82rem; font-weight:600; color:#64748b;">(양쪽 비커의 설탕물 농도를 똑같이 맞추세요)</small>
+          </div>
+          <div class="recipe-hint-badge" style="font-size:0.85rem; font-weight:700; color:#d97706; background:#fef3c7; padding:4px 12px; border-radius:9999px;">
+            🍯 목표: 오른쪽 황금 레시피와 똑같은 달콤함 만들기
+          </div>
+        </div>
+
+        <div class="beaker-layout-row">
+          <!-- 1. 왼쪽 비커 (학생의 조제 비커) -->
+          <div class="beaker-station player-station">
+            <div class="beaker-badge-pill">🧪 왼쪽 비커 (나의 조제 비커)</div>
+
+            <div class="beaker-visual-wrapper">
+              <div class="particle-drop-zone" id="playerDropZone"></div>
+              <div class="glass-beaker">
+                <div class="beaker-glass-shine"></div>
+                <div class="beaker-tick-layer">
+                  <div class="tick-line major"><span>500</span></div>
+                  <div class="tick-line"><span>400</span></div>
+                  <div class="tick-line major"><span>300</span></div>
+                  <div class="tick-line"><span>200</span></div>
+                  <div class="tick-line major"><span>100</span></div>
+                </div>
+                <!-- 수면 및 액체 -->
+                <div class="liquid-body" id="playerLiquid" style="height: 30%;">
+                  <div class="liquid-surface-wave"></div>
+                  <div class="sugar-sediment" id="playerSediment"></div>
+                </div>
+              </div>
+              <div class="beaker-pedestal"></div>
+            </div>
+
+            <!-- 왼쪽 비커 데이터 판독기 -->
+            <div class="beaker-data-card">
+              <div class="beaker-data-row">
+                <span class="beaker-data-label">💧 물의 양</span>
+                <strong class="beaker-data-value water-val" id="playerWaterText">100 g</strong>
+              </div>
+              <div class="beaker-data-row">
+                <span class="beaker-data-label">🍬 설탕의 양</span>
+                <strong class="beaker-data-value sugar-val" id="playerSugarText">0 g</strong>
+              </div>
+              <div class="beaker-data-row">
+                <span class="beaker-data-label">⚖️ 총 설탕물</span>
+                <strong class="beaker-data-value" id="playerTotalText">100 g</strong>
+              </div>
+              <div class="beaker-data-row" style="border-top:1px dashed #cbd5e1; padding-top:4px;">
+                <span class="beaker-data-label">📊 현재 농도</span>
+                <strong class="beaker-data-value conc-val" id="playerConcText">0.0 %</strong>
+              </div>
+            </div>
+          </div>
+
+          <!-- 2. 중앙 농도 굴절계 (맛 센서) -->
+          <div class="center-comparator">
+            <div class="refractometer-meter">
+              <div class="meter-header">🔬 농도 굴절계 (맛 센서)</div>
+              <div class="meter-scale-visual">
+                <div class="meter-center-mark" title="목표 농도 일치 지점"></div>
+                <div class="meter-needle" id="refractometerNeedle"></div>
+              </div>
+              <div class="meter-status-pill" id="refractometerStatus">
+                농도 측정 중...
+              </div>
+            </div>
+            <div style="font-size:0.75rem; color:#64748b; text-align:center; font-weight:600;">
+              ◀ 더 싱거움 | 일치 🌟 | 더 달콤함 ▶
+            </div>
+          </div>
+
+          <!-- 3. 오른쪽 비커 (목표 기준 - 황금 레시피) -->
+          <div class="beaker-station target-station">
+            <div class="beaker-badge-pill">👑 오른쪽 비커 (목표 주문 레시피)</div>
+
+            <div class="beaker-visual-wrapper">
+              <div class="glass-beaker">
+                <div class="beaker-glass-shine"></div>
+                <div class="beaker-tick-layer">
+                  <div class="tick-line major"><span>500</span></div>
+                  <div class="tick-line"><span>400</span></div>
+                  <div class="tick-line major"><span>300</span></div>
+                  <div class="tick-line"><span>200</span></div>
+                  <div class="tick-line major"><span>100</span></div>
+                </div>
+                <!-- 수면 및 액체 -->
+                <div class="liquid-body" id="targetLiquid" style="height: 48%; background-color: rgba(251, 191, 36, 0.65);">
+                  <div class="liquid-surface-wave"></div>
+                  <div class="sugar-sediment visible" id="targetSediment"></div>
+                </div>
+              </div>
+              <div class="beaker-pedestal"></div>
+            </div>
+
+            <!-- 오른쪽 비커 데이터 판독기 -->
+            <div class="beaker-data-card">
+              <div class="beaker-data-row">
+                <span class="beaker-data-label">💧 물의 양</span>
+                <strong class="beaker-data-value water-val" id="targetWaterText">200 g</strong>
+              </div>
+              <div class="beaker-data-row">
+                <span class="beaker-data-label">🍬 설탕의 양</span>
+                <strong class="beaker-data-value sugar-val" id="targetSugarText">40 g</strong>
+              </div>
+              <div class="beaker-data-row">
+                <span class="beaker-data-label">⚖️ 총 설탕물</span>
+                <strong class="beaker-data-value" id="targetTotalText">240 g</strong>
+              </div>
+              <div class="beaker-data-row" style="border-top:1px dashed #cbd5e1; padding-top:4px;">
+                <span class="beaker-data-label">🌟 목표 농도</span>
+                <strong class="beaker-data-value conc-val" id="targetConcText">16.7 %</strong>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- 하단 조작 패널 (규칙 4번: 설탕 추가/제거, 물 추가/제거 버튼) -->
+      <div class="conc-control-deck">
+        <div class="deck-section-title">
+          <span>🎛️ 왼쪽 비커 조절대 (물 & 설탕 추가 / 제거)</span>
+          <span style="font-size:0.82rem; font-weight:600; color:#64748b;">버튼을 누르거나 꾹 누르면 연속으로 증감합니다</span>
+        </div>
+
+        <div class="control-rows-container">
+          <!-- 💧 물 조작 카드 -->
+          <div class="ingredient-control-card water-ctrl">
+            <div class="ing-header">
+              <span class="ing-name">💧 물 추가 / 제거</span>
+              <span class="ing-current-val" id="valCurrentWater">100 g</span>
+            </div>
+
+            <div class="stepper-row">
+              <button type="button" class="btn-step-main btn-minus" id="btnMinusWater" title="물 10g 제거">− 10g</button>
+              <button type="button" class="btn-step-main btn-plus" id="btnPlusWater" title="물 10g 추가">+ 10g</button>
+            </div>
+
+            <div class="quick-buttons-row">
+              <button type="button" class="btn-quick" data-water-delta="-100">−100g</button>
+              <button type="button" class="btn-quick" data-water-delta="-50">−50g</button>
+              <button type="button" class="btn-quick" data-water-delta="-10">−10g</button>
+              <button type="button" class="btn-quick" data-water-delta="-1">−1g</button>
+              <button type="button" class="btn-quick quick-plus" data-water-delta="1">+1g</button>
+              <button type="button" class="btn-quick quick-plus" data-water-delta="10">+10g</button>
+              <button type="button" class="btn-quick quick-plus" data-water-delta="50">+50g</button>
+              <button type="button" class="btn-quick quick-plus" data-water-delta="100">+100g</button>
+            </div>
+          </div>
+
+          <!-- 🍬 설탕 조작 카드 -->
+          <div class="ingredient-control-card sugar-ctrl">
+            <div class="ing-header">
+              <span class="ing-name">🍬 설탕 추가 / 제거</span>
+              <span class="ing-current-val" id="valCurrentSugar">0 g</span>
+            </div>
+
+            <div class="stepper-row">
+              <button type="button" class="btn-step-main btn-minus" id="btnMinusSugar" title="설탕 5g 제거">− 5g</button>
+              <button type="button" class="btn-step-main btn-plus" id="btnPlusSugar" title="설탕 5g 추가">+ 5g</button>
+            </div>
+
+            <div class="quick-buttons-row">
+              <button type="button" class="btn-quick" data-sugar-delta="-50">−50g</button>
+              <button type="button" class="btn-quick" data-sugar-delta="-10">−10g</button>
+              <button type="button" class="btn-quick" data-sugar-delta="-5">−5g</button>
+              <button type="button" class="btn-quick" data-sugar-delta="-1">−1g</button>
+              <button type="button" class="btn-quick quick-plus" data-sugar-delta="1">+1g</button>
+              <button type="button" class="btn-quick quick-plus" data-sugar-delta="5">+5g</button>
+              <button type="button" class="btn-quick quick-plus" data-sugar-delta="10">+10g</button>
+              <button type="button" class="btn-quick quick-plus" data-sugar-delta="50">+50g</button>
+            </div>
+          </div>
+        </div>
+
+        <!-- 등식의 성질 곱셈·나눗셈 퀵 배율 도우미 -->
+        <div class="ratio-helper-row">
+          <div class="ratio-helper-label">
+            <span>⚡ 등식의 성질 배율 퀵 액션:</span>
+            <small>(오른쪽 비커 대비 동일 배율 즉시 적용)</small>
+          </div>
+          <div class="ratio-chip-group">
+            <button type="button" class="btn-ratio-chip" data-ratio-factor="half">÷ 2 (절반)</button>
+            <button type="button" class="btn-ratio-chip" data-ratio-factor="third">÷ 3 (1/3배)</button>
+            <button type="button" class="btn-ratio-chip" data-ratio-factor="1.5">× 1.5배</button>
+            <button type="button" class="btn-ratio-chip" data-ratio-factor="2">× 2배</button>
+            <button type="button" class="btn-ratio-chip" data-ratio-factor="3">× 3배</button>
+            <button type="button" class="btn-ratio-chip" data-ratio-factor="4">× 4배</button>
+          </div>
+        </div>
+
+        <!-- 최종 확인 및 제출 버튼 -->
+        <div class="submit-action-row">
+          <button type="button" class="btn-submit-solution" id="btnSubmitConcentration">
+            <span>🎯 농도 완성! 황금 비율 확인하기</span>
+          </button>
+        </div>
+      </div>
+    </section>
+
+    <!-- 메인 게임 스테이지 (모드 1: 어깨 저울 방정식) -->
+    <main class="main-layout" id="scaleMainLayout">
       <!-- 왼쪽/중앙: 지훈이의 어깨 저울 & 드래그 앤 드롭 조작 공간 -->
       <section class="stage-card" aria-label="설탕 저울 조작 영역">
         <!-- 실시간 균형 상태 표시 바 (조건 3) -->
@@ -360,7 +611,7 @@
   </div>
 
   <!-- [모달 1] 미션 안내 & 규칙 소개 (이미지 1 원문 충실 반영) -->
-  <div class="modal-backdrop" id="missionModal" role="dialog" aria-modal="true" aria-labelledby="missionModalTitle">
+  <div class="modal-backdrop hidden" id="missionModal" role="dialog" aria-modal="true" aria-labelledby="missionModalTitle">
     <div class="modal-box mission-modal-box">
       <div class="modal-header">
         <h2 id="missionModalTitle">📦 [Mission!] 설탕 배달</h2>
@@ -548,16 +799,26 @@
       </div>
 
       <div class="modal-body">
+        <!-- 게임 모드 선택 탭 (설탕 배달 vs 설탕물 만들기 분리 순위표) -->
+        <div class="ranking-game-selector">
+          <button type="button" class="ranking-game-btn active" id="btnRankGameScale" data-rank-game="scale">
+            ⚖️ 설탕 배달 랭킹
+          </button>
+          <button type="button" class="ranking-game-btn" id="btnRankGameConc" data-rank-game="concentration">
+            🧪 설탕물 만들기 랭킹
+          </button>
+        </div>
+
         <!-- 랭킹 상단 컨트롤 & 난이도 탭 -->
         <div class="ranking-top-bar">
           <div class="ranking-tabs" role="tablist" aria-label="랭킹 난이도 탭">
-            <button type="button" class="ranking-tab" data-rank-diff="basic" role="tab">
+            <button type="button" class="ranking-tab" data-rank-diff="basic" role="tab" id="rankTabBasic">
               🌟 기초 (40초)
             </button>
-            <button type="button" class="ranking-tab active" data-rank-diff="standard" role="tab">
+            <button type="button" class="ranking-tab active" data-rank-diff="standard" role="tab" id="rankTabStandard">
               ⚡ 기본 (1분)
             </button>
-            <button type="button" class="ranking-tab" data-rank-diff="challenge" role="tab">
+            <button type="button" class="ranking-tab" data-rank-diff="challenge" role="tab" id="rankTabChallenge">
               🔥 심화 (1분 20초)
             </button>
           </div>
@@ -568,6 +829,9 @@
             <button type="button" class="btn btn-ghost btn-xs" id="btnRefreshRanking" title="실시간 순위 새로고침">
               🔄 새로고침
             </button>
+            <button type="button" class="btn btn-ghost btn-xs" id="btnAdminMode" title="진행자 관리자 모드 (비정상 닉네임 즉시 삭제)">
+              🔒 관리자
+            </button>
           </div>
         </div>
 
@@ -575,13 +839,15 @@
         <div class="ranking-table-wrap">
           <table class="ranking-table">
             <thead>
-              <tr>
+              <tr id="rankingTableHeadRow">
                 <th style="width:55px;">순위</th>
                 <th>닉네임</th>
                 <th>최종 점수</th>
                 <th>정답 수</th>
                 <th>총 시간</th>
+                <th id="rankingStepsTh">조작 단계</th>
                 <th>등록 일시</th>
+                <th id="rankingAdminTh" class="hidden" style="width:70px; color:#dc2626;">관리</th>
               </tr>
             </thead>
             <tbody id="rankingTableBody">
@@ -688,6 +954,93 @@
     <div class="rule3-alert-desc" id="rule3AlertDesc">양쪽 어깨의 무게가 달라 지훈이가 중심을 잃었어요. 이전 균형 상태로 되돌아갑니다.</div>
   </div>
 
-  <script src="game.js"></script>
+  <!-- 🧪 설탕물 농도 연구소 채점 및 등식의 성질 상세 해설 모달 -->
+  <div class="modal-backdrop hidden" id="concResultModal" role="dialog" aria-modal="true" aria-labelledby="concModalTitle">
+    <div class="modal-box grading-modal-box">
+      <div class="modal-header">
+        <div class="modal-badge">🧪 결과 및 등식의 성질 해설</div>
+        <h2 class="modal-title" id="concModalTitle">🎉 정답입니다! 황금 비율 완성!</h2>
+      </div>
+      <div class="modal-body" id="concModalBody">
+        <!-- JS 동적 주입 -->
+      </div>
+      <div class="modal-footer space-between">
+        <button type="button" class="btn btn-outline" id="btnConcModalClose">닫기</button>
+        <button type="button" class="btn btn-primary" id="btnConcModalNext">다음 문제 풀기 ➔</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- 🧪 [신규 모달] 설탕물 농도 연구소 시작 전 미션 안내 & 규칙 소개 -->
+  <div class="modal-backdrop hidden" id="concMissionModal" role="dialog" aria-modal="true" aria-labelledby="concMissionModalTitle">
+    <div class="modal-box mission-modal-box">
+      <div class="modal-header">
+        <h2 id="concMissionModalTitle">🧪 [Mission!] 지훈이의 특제 설탕물 연구소</h2>
+        <button type="button" class="modal-close" id="btnCloseConcMissionX" aria-label="닫기">✕</button>
+      </div>
+      <div class="modal-body">
+        <div class="story-paper">
+          <p class="story-paragraph">
+            설탕 장수 지훈이는 마을 사람들에게 가장 달콤하고 시원한 <strong>특제 황금 설탕물 음료</strong>를 배달하려고 합니다.
+            손님이 주문한 <strong>오른쪽 비커</strong>의 황금 비율 레시피와 <strong>정확히 똑같은 농도(비율)</strong>로 <strong>왼쪽 비커</strong>의 음료를 조제해야 합니다!
+          </p>
+          <p class="story-paragraph">
+            그런데 왼쪽 비커에는 <strong>물 또는 설탕 중 하나의 양만</strong> 주어져 있습니다.
+            지훈이가 등식의 성질을 이용해 손님이 원하는 황금 비율의 설탕물을 완성할 수 있도록 도와주세요!
+          </p>
+
+          <div class="story-rules-box">
+            <div class="story-rule-item"><span>[규칙1]</span> 화면 좌우에 왼쪽 비커와 오른쪽 비커가 놓여 있습니다.</div>
+            <div class="story-rule-item"><span>[규칙2]</span> <strong>오른쪽 비커</strong>에는 손님이 주문한 물과 설탕의 양(목표 농도)이 주어져 있습니다.</div>
+            <div class="story-rule-item highlight-rule"><span>[규칙3]</span> <strong>왼쪽 비커</strong>에는 물 또는 설탕 중 <strong>하나의 양만</strong> 주어져 있습니다.</div>
+            <div class="story-rule-item"><span>[규칙4]</span> 하단 UI의 <strong>물 추가/제거</strong>와 <strong>설탕 추가/제거</strong> 버튼을 눌러 동일한 농도를 만듭니다.</div>
+            <div class="story-rule-item highlight-rule" style="background:#ecfdf5; border-color:#86efac; color:#166534;">
+              <span>[규칙5]</span> 💡 <strong>핵심 수학 원리 (등식의 성질)</strong>: 등식의 양변에 같은 수를 곱하거나 0이 아닌 같은 수로 나누어도 등식이 성립하듯, <strong>같은 비율의 설탕과 물을 넣거나 빼도 농도는 변하지 않습니다!</strong>
+            </div>
+          </div>
+
+          <div class="story-score-guide" style="margin-top:12px;background:#fef3c7;border:1.5px dashed #f59e0b;border-radius:12px;padding:12px 14px;font-size:13.5px;color:#92400e;line-height:1.6;">
+            <strong>🏆 스테이지 5문제 챌린지 & 점수 규칙:</strong><br />
+            • 각 스테이지는 <b>총 5문제</b>를 연속으로 조제합니다.<br />
+            • 정답 시 <b>기본 100점</b> + 풀이 시간이 짧을수록 <b>스피드 점수(최대 100점)</b> 추가 획득!<br />
+            • 농도가 맞지 않으면 <b>현재 점수의 10% 감점</b>, 제한 시간 초과 시 <b>30% 감점</b>됩니다.<br />
+            • 5문제를 모두 완성하고 최고의 점수로 <b>명예의 전당 랭킹</b>에 이름을 올려보세요!
+          </div>
+        </div>
+
+        <div class="howto-row">
+          <div class="howto-step">
+            <strong>1️⃣ 물 & 설탕 조절</strong>
+            <span>하단 데크의 <b>+ / - 버튼</b>과 <b>퀵 버튼</b>을 눌러 물과 설탕의 양을 조절하세요. (버튼을 꾹 누르면 연속 증감!)</span>
+          </div>
+          <div class="howto-step">
+            <strong>2️⃣ 등식의 성질 활용</strong>
+            <span>오른쪽 비커 대비 물이 <b>÷2배</b> 줄었다면 설탕도 <b>÷2배</b>, 물이 <b>×3배</b> 늘었다면 설탕도 <b>×3배</b> 맞추면 성공!</span>
+          </div>
+          <div class="howto-step">
+            <strong>3️⃣ 농도 굴절계 & 제출</strong>
+            <span>중앙의 <b>맛 센서</b> 바늘이 가운데 <b>'황금 비율 일치 🌟'</b>를 가리키면 <b>[농도 완성!]</b> 버튼을 누르세요.</span>
+          </div>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-submit" id="btnStartConcMission">🚀 실험 시작! 특제 설탕물 조제하기 ➔</button>
+      </div>
+    </div>
+  </div>
+
+  <script src="game.js?v=20261114_admin"></script>
+  <script src="concentration-game.js?v=20261114_admin"></script>
+  <script>
+    // URL 파라미터에 따른 초기 모드 설정 (?mode=concentration인 경우에만 2번째 게임으로 진입)
+    (function() {
+      const urlParams = new URLSearchParams(window.location.search);
+      if (urlParams.get("mode") === "concentration") {
+        if (window.concentrationGameInstance) {
+          window.concentrationGameInstance.switchMode("concentration", true);
+        }
+      }
+    })();
+  </script>
 </body>
 </html>

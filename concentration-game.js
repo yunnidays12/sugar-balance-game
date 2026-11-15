@@ -47,6 +47,11 @@
       osc.stop(now + duration + 0.02);
     }
 
+    pickup() {
+      this.tone(523.25, 0.08, "triangle", 0.12, 0);
+      this.tone(659.25, 0.12, "triangle", 0.12, 0.06);
+    }
+
     waterDrop() {
       this.tone(600, 0.06, "sine", 0.1);
       this.tone(850, 0.08, "sine", 0.08, 0.03);
@@ -252,6 +257,8 @@
       this.totalQuestions = 5;
       this.score = 0;
       this.correctCount = 0;
+      this.totalSolveTimeSec = 0;
+      this.totalAdjustCount = 0;
       this.currentProblem = null;
 
       // 현재 플레이어 비커 상태
@@ -264,6 +271,8 @@
       this.timeLimit = 40.0;
       this.startTime = 0;
       this.isSubmitting = false;
+      this.hasStarted = false; // 시작 전 설명 모달을 닫아야 타이머 가동
+      this.isPaused = false;
 
       // 연속 증가/감소 인터벌
       this.holdInterval = null;
@@ -273,6 +282,13 @@
       this.dom = {};
       this.initDOMElements();
       this.bindEvents();
+      this.loadProblem();
+
+      // 시작 시점에 설명 모달 오픈 (기본값은 1번째 게임인 설탕장수 게임이므로 concentration 모드일 때만 자동 오픈)
+      const urlParams = new URLSearchParams(window.location.search);
+      if (urlParams.get("mode") === "concentration") {
+        this.openMissionModal();
+      }
     }
 
     initDOMElements() {
@@ -337,15 +353,22 @@
       this.dom.concModalBody = document.getElementById("concModalBody");
       this.dom.btnConcModalNext = document.getElementById("btnConcModalNext");
       this.dom.btnConcModalClose = document.getElementById("btnConcModalClose");
+
+      // 시작 전 미션 설명 모달류
+      this.dom.concMissionModal = document.getElementById("concMissionModal");
+      this.dom.btnStartConcMission = document.getElementById("btnStartConcMission");
+      this.dom.btnCloseConcMissionX = document.getElementById("btnCloseConcMissionX");
+      this.dom.btnOpenMission = document.getElementById("btnOpenMission");
+      this.dom.btnOpenMissionGuide = document.getElementById("btnOpenMissionGuide");
     }
 
     bindEvents() {
-      // 1. 모드 전환 버튼
+      // 1. 모드 전환 버튼 (탭 클릭 시 항상 설명란 팝업 오픈)
       if (this.dom.btnModeConcentration) {
-        this.dom.btnModeConcentration.addEventListener("click", () => this.switchMode("concentration"));
+        this.dom.btnModeConcentration.addEventListener("click", () => this.switchMode("concentration", true));
       }
       if (this.dom.btnModeScale) {
-        this.dom.btnModeScale.addEventListener("click", () => this.switchMode("scale"));
+        this.dom.btnModeScale.addEventListener("click", () => this.switchMode("scale", true));
       }
 
       // 2. 새 문제 & 리셋
@@ -438,6 +461,63 @@
           }
         });
       });
+
+      // 9. 미션 설명 모달 (시작 전 설명창) 이벤트
+      if (this.dom.btnStartConcMission) {
+        this.dom.btnStartConcMission.addEventListener("click", () => {
+          this.closeMissionModal();
+        });
+      }
+      if (this.dom.btnCloseConcMissionX) {
+        this.dom.btnCloseConcMissionX.addEventListener("click", () => {
+          this.closeMissionModal();
+        });
+      }
+      if (this.dom.concMissionModal) {
+        this.dom.concMissionModal.addEventListener("click", (e) => {
+          if (e.target === this.dom.concMissionModal) {
+            this.closeMissionModal();
+          }
+        });
+      }
+
+      // 상단 헤더의 미션 버튼(btnOpenMission) 클릭 시 분기 연동
+      if (this.dom.btnOpenMission) {
+        this.dom.btnOpenMission.addEventListener("click", (e) => {
+          const isConcActive = this.dom.concentrationContainer && !this.dom.concentrationContainer.classList.contains("hidden");
+          if (isConcActive) {
+            e.stopPropagation();
+            this.openMissionModal();
+          }
+        }, true);
+      }
+      if (this.dom.btnOpenMissionGuide) {
+        this.dom.btnOpenMissionGuide.addEventListener("click", () => {
+          this.openMissionModal();
+        });
+      }
+
+      // ESC 키로 설명 모달 닫기
+      window.addEventListener("keydown", (e) => {
+        if (e.key === "Escape") {
+          if (this.dom.concMissionModal && !this.dom.concMissionModal.classList.contains("hidden")) {
+            this.closeMissionModal();
+          }
+        }
+      });
+
+      // 스테이지 클리어 모달에서 '다시 도전하기' 클릭 연동
+      const btnRestartStage = document.getElementById("btnRestartStage");
+      if (btnRestartStage) {
+        btnRestartStage.addEventListener("click", () => {
+          const isConcActive = this.dom.concentrationContainer && !this.dom.concentrationContainer.classList.contains("hidden");
+          if (isConcActive) {
+            const clearModal = document.getElementById("stageClearModal");
+            if (clearModal) clearModal.classList.add("hidden");
+            this.restartStage();
+          }
+        });
+      }
     }
 
     /**
@@ -477,24 +557,67 @@
       this.currentQuestion = 1;
       this.score = 0;
       this.correctCount = 0;
+      this.totalSolveTimeSec = 0;
+      this.totalAdjustCount = 0;
       this.loadProblem();
     }
 
-    switchMode(mode) {
+    switchMode(mode, showModal = true) {
+      const brandBadge = document.getElementById("appBrandBadge");
+      const eyebrow = document.getElementById("appEyebrow");
+      const gameTitle = document.getElementById("appGameTitle");
+
       if (mode === "concentration") {
         if (this.dom.btnModeConcentration) this.dom.btnModeConcentration.classList.add("active");
         if (this.dom.btnModeScale) this.dom.btnModeScale.classList.remove("active");
         if (this.dom.concentrationContainer) this.dom.concentrationContainer.classList.remove("hidden");
         if (this.dom.scaleToolbar) this.dom.scaleToolbar.style.display = "none";
         if (this.dom.scaleMain) this.dom.scaleMain.style.display = "none";
+
+        if (brandBadge) brandBadge.textContent = "🧪";
+        if (eyebrow) eyebrow.textContent = "[Mission!] 등식의 성질 (곱셈·나눗셈) 탐구 게임";
+        if (gameTitle) gameTitle.textContent = "설탕 장수 지훈이의 특제 설탕물 연구소";
+
+        if (window.scaleGame) window.scaleGame.stop();
         this.loadProblem();
+        if (showModal) {
+          this.openMissionModal();
+        }
       } else {
         if (this.dom.btnModeConcentration) this.dom.btnModeConcentration.classList.remove("active");
         if (this.dom.btnModeScale) this.dom.btnModeScale.classList.add("active");
         if (this.dom.concentrationContainer) this.dom.concentrationContainer.classList.add("hidden");
         if (this.dom.scaleToolbar) this.dom.scaleToolbar.style.display = "";
         if (this.dom.scaleMain) this.dom.scaleMain.style.display = "";
-        this.stopTimer();
+
+        if (brandBadge) brandBadge.textContent = "⚖️";
+        if (eyebrow) eyebrow.textContent = "[Mission!] 등식의 성질 탐구 게임";
+        if (gameTitle) gameTitle.textContent = "설탕 장수 지훈이의 설탕 배달";
+
+        this.pauseTimer();
+        if (window.scaleGame) {
+          window.scaleGame.start(showModal);
+        }
+      }
+    }
+
+    openMissionModal() {
+      if (this.dom.concMissionModal) {
+        this.dom.concMissionModal.classList.remove("hidden");
+        this.pauseTimer();
+      }
+    }
+
+    closeMissionModal() {
+      if (this.dom.concMissionModal) {
+        this.dom.concMissionModal.classList.add("hidden");
+        if (!this.hasStarted) {
+          this.hasStarted = true;
+          this.startTimer();
+          sfx.pickup();
+        } else {
+          this.resumeTimer();
+        }
       }
     }
 
@@ -504,7 +627,15 @@
       this.playerSugar = this.currentProblem.initialLeft.sugar;
 
       this.isSubmitting = false;
-      this.startTimer();
+      const limits = { basic: 30, standard: 40, challenge: 60 };
+      this.timeLimit = limits[this.difficulty] || 40;
+      this.timeRemaining = this.timeLimit;
+
+      if (this.hasStarted) {
+        this.startTimer();
+      } else {
+        this.renderTimer();
+      }
       this.render();
       sfx.sugarDrop();
     }
@@ -518,6 +649,7 @@
     }
 
     adjustWater(delta) {
+      this.totalAdjustCount += 1;
       const next = Math.max(0, Math.min(800, this.playerWater + delta));
       if (next !== this.playerWater) {
         this.playerWater = next;
@@ -532,6 +664,7 @@
     }
 
     adjustSugar(delta) {
+      this.totalAdjustCount += 1;
       const next = Math.max(0, Math.min(400, this.playerSugar + delta));
       if (next !== this.playerSugar) {
         this.playerSugar = next;
@@ -550,6 +683,7 @@
      */
     applyRatioShortcut(factorStr) {
       if (!this.currentProblem) return;
+      this.totalAdjustCount += 1;
       const t = this.currentProblem.target;
       let factor = parseFloat(factorStr);
 
@@ -616,6 +750,30 @@
       if (this.timerInterval) {
         clearInterval(this.timerInterval);
         this.timerInterval = null;
+      }
+    }
+
+    pauseTimer() {
+      if (this.timerInterval) {
+        clearInterval(this.timerInterval);
+        this.timerInterval = null;
+        this.isPaused = true;
+      }
+    }
+
+    resumeTimer() {
+      if (this.isPaused && this.timeRemaining > 0 && this.hasStarted) {
+        this.isPaused = false;
+        this.stopTimer();
+        this.timerInterval = setInterval(() => {
+          this.timeRemaining -= 0.1;
+          if (this.timeRemaining <= 0) {
+            this.timeRemaining = 0;
+            this.stopTimer();
+            this.handleTimeover();
+          }
+          this.renderTimer();
+        }, 100);
       }
     }
 
@@ -834,6 +992,10 @@
         this.score += earnedScore;
         this.correctCount += 1;
 
+        // 소요 시간 누적
+        const solveTime = Math.max(0.5, this.timeLimit - this.timeRemaining);
+        this.totalSolveTimeSec += solveTime;
+
         // 등식의 성질 상세 해설 HTML 작성
         const explanationHtml = this.buildExplanationHtml(prob, true, earnedScore, speedBonus);
 
@@ -988,22 +1150,102 @@
       sfx.stageClear();
       this.stopTimer();
 
-      // 전역 랭킹 모달(stageClearModal)과 연동 지원
+      // 전역 랭킹 모달(stageClearModal)과 연동
       const clearModal = document.getElementById("stageClearModal");
       if (clearModal) {
-        const finalScoreEl = document.getElementById("clearFinalScore");
-        const correctCountEl = document.getElementById("clearCorrectCount");
-        const commentEl = document.getElementById("clearScoreComment");
+        // 제목 및 부제목 업데이트
+        const titleEl = document.getElementById("stageClearModalTitle");
+        const subtitleEl = document.querySelector("#stageClearModal .stage-clear-subtitle");
+        if (titleEl) titleEl.textContent = "🧪 특제 설탕물 연구소 5문제 완주!";
+        if (subtitleEl) subtitleEl.textContent = "등식의 성질(곱셈·나눗셈)을 활용해 특제 설탕물 5문제를 모두 성공적으로 완성했습니다!";
 
+        // 최종 획득 점수
+        const finalScoreEl = document.getElementById("stageFinalScore");
         if (finalScoreEl) finalScoreEl.textContent = `${this.score}점`;
-        if (correctCountEl) correctCountEl.textContent = `${this.correctCount} / ${this.totalQuestions} 문제 정답`;
-        if (commentEl) {
-          commentEl.textContent = `축하합니다! 설탕물 농도 연구소 5문제를 모두 완주하셨습니다. 등식의 성질을 완벽히 마스터하셨네요!`;
+
+        // 점수 공식 서브 텍스트
+        const formulaEl = document.getElementById("stageScoreFormula");
+        if (formulaEl) formulaEl.textContent = "기본 100점 + 남은 시간 스피드 점수 (오답 -10%, 시간초과 -30% 적용)";
+
+        // 5문제 요약 성적표
+        const correctStatsEl = document.getElementById("stageCorrectStats");
+        if (correctStatsEl) correctStatsEl.textContent = `${this.correctCount} / ${this.totalQuestions}`;
+
+        const accuracyEl = document.getElementById("stageAccuracyText");
+        if (accuracyEl) {
+          const accPct = Math.round((this.correctCount / this.totalQuestions) * 100);
+          accuracyEl.textContent = `정확도 ${accPct}% (${this.correctCount}문제 정답)`;
         }
+
+        const totalTimeEl = document.getElementById("stageTotalTimeText");
+        if (totalTimeEl) totalTimeEl.textContent = `${this.totalSolveTimeSec.toFixed(1)}초`;
+
+        const avgTimeEl = document.getElementById("stageAvgTimeText");
+        if (avgTimeEl) {
+          const avgSec = this.totalSolveTimeSec / this.totalQuestions;
+          avgTimeEl.textContent = `문제당 평균 ${avgSec.toFixed(1)}초`;
+        }
+
+        const totalStepsEl = document.getElementById("stageTotalStepsText");
+        if (totalStepsEl) totalStepsEl.textContent = `${this.totalAdjustCount}회 조작`;
+
+        const diffNames = { basic: "기초", standard: "표준", challenge: "심화" };
+        const diffText = `설탕물 연구소 (${diffNames[this.difficulty] || "표준"})`;
+
+        const diffBadgeEl = document.getElementById("stageDiffBadge");
+        if (diffBadgeEl) diffBadgeEl.textContent = diffText;
+
+        const rankDiffBadgeEl = document.getElementById("stageRankDiffBadge");
+        if (rankDiffBadgeEl) rankDiffBadgeEl.textContent = diffText;
+
+        // 랭킹 등록 폼 초기화
+        const submitResult = document.getElementById("stageRankSubmitResult");
+        if (submitResult) submitResult.classList.add("hidden");
+
+        const submitForm = document.getElementById("stageRankSubmitForm");
+        if (submitForm) submitForm.classList.remove("hidden");
+
+        const btnSubmit = document.getElementById("btnSubmitStageScore");
+        if (btnSubmit) {
+          btnSubmit.disabled = false;
+          btnSubmit.textContent = "🏆 내 순위 등록하기";
+        }
+
+        // 저장된 닉네임 자동 입력
+        try {
+          const savedNick = localStorage.getItem("sugar_merchant_nickname") || "";
+          const nickInput = document.getElementById("stageRankNicknameInput");
+          if (savedNick && nickInput) {
+            nickInput.value = savedNick;
+          }
+        } catch (e) {}
+
+        // window.scaleGame의 랭킹 등록 엔트리 동기화
+        if (window.scaleGame && window.scaleGame.setLastCompletedStageEntry) {
+          window.scaleGame.setLastCompletedStageEntry({
+            difficulty: this.difficulty,
+            score: this.score,
+            correctCount: this.correctCount,
+            totalQuestions: this.totalQuestions,
+            totalSolveTimeSec: this.totalSolveTimeSec,
+            totalSteps: this.totalAdjustCount,
+            gameMode: "concentration",
+          });
+        }
+
         clearModal.classList.remove("hidden");
       } else {
         alert(`🎉 축하합니다! 5문제 완료! 최종 점수: ${this.score}점`);
       }
+    }
+
+    restartStage() {
+      this.currentQuestion = 1;
+      this.score = 0;
+      this.correctCount = 0;
+      this.totalSolveTimeSec = 0;
+      this.totalAdjustCount = 0;
+      this.loadProblem();
     }
   }
 

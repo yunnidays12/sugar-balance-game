@@ -2163,6 +2163,44 @@ input {
   font-weight: 600;
 }
 
+.ranking-game-selector {
+  display: flex;
+  gap: 8px;
+  margin-bottom: 14px;
+  background: #f1f5f9;
+  padding: 6px;
+  border-radius: 12px;
+  border: 1px solid #cbd5e1;
+}
+
+.ranking-game-btn {
+  flex: 1;
+  padding: 9px 14px;
+  font-weight: 800;
+  font-size: 0.95rem;
+  border-radius: 8px;
+  border: none;
+  cursor: pointer;
+  background: transparent;
+  color: #64748b;
+  transition: all 0.18s ease;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+}
+
+.ranking-game-btn:hover {
+  color: #1e293b;
+  background: rgba(255, 255, 255, 0.6);
+}
+
+.ranking-game-btn.active {
+  background: #ffffff;
+  color: #0f172a;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.1);
+}
+
 .ranking-top-bar {
   display: flex;
   align-items: center;

@@ -83,6 +83,14 @@
       this.tone(293.66, 0.25, "sawtooth", 0.15, 0.18);
       this.tone(261.63, 0.45, "sawtooth", 0.16, 0.36);
     }
+
+    click() {
+      this.tone(480, 0.05, "triangle", 0.08);
+    }
+
+    btnClick() {
+      this.tone(480, 0.05, "triangle", 0.08);
+    }
   }
 
   const sfx = new SoundFX();
@@ -312,6 +320,16 @@
 
     // 🏆 랭킹보드 모달 및 관련 요소
     rankingModal: document.getElementById("rankingModal"),
+    rankingModalTitle: document.getElementById("rankingModalTitle"),
+    rankingSubDesc: document.querySelector(".ranking-sub-desc"),
+    btnRankGameScale: document.getElementById("btnRankGameScale"),
+    btnRankGameConc: document.getElementById("btnRankGameConc"),
+    rankTabBasic: document.getElementById("rankTabBasic"),
+    rankTabStandard: document.getElementById("rankTabStandard"),
+    rankTabChallenge: document.getElementById("rankTabChallenge"),
+    rankingStepsTh: document.getElementById("rankingStepsTh"),
+    rankingAdminTh: document.getElementById("rankingAdminTh"),
+    btnAdminMode: document.getElementById("btnAdminMode"),
     rankingTabs: document.querySelectorAll(".ranking-tab"),
     cloudStatusPill: document.getElementById("cloudStatusPill"),
     cloudStatusText: document.getElementById("cloudStatusText"),
@@ -491,15 +509,42 @@
   }
 
   function pauseTimer() {
-    if (!state.hasStarted || state.isSolved || state.isTimeOver) return;
     state.isPaused = true;
+    if (state.timerInterval) {
+      clearInterval(state.timerInterval);
+      state.timerInterval = null;
+    }
+  }
+
+  function stopTimer() {
+    state.isPaused = true;
+    state.hasStarted = false;
+    if (state.timerInterval) {
+      clearInterval(state.timerInterval);
+      state.timerInterval = null;
+    }
   }
 
   function resumeTimer() {
-    if (!state.hasStarted || state.isSolved || state.isTimeOver || !state.isPaused) return;
+    if (!state.hasStarted || state.isSolved || state.isTimeOver) return;
     state.isPaused = false;
     // 남은 시간을 보존하도록 startTimeMs 재설정
     state.startTimeMs = Date.now() - (state.totalTimeSec - state.remainingSec) * 1000;
+    if (!state.timerInterval) {
+      state.timerInterval = setInterval(() => {
+        if (!state.hasStarted || state.isSolved || state.isTimeOver || state.isPaused) return;
+
+        const elapsed = (Date.now() - state.startTimeMs) / 1000;
+        state.remainingSec = Math.max(0, state.totalTimeSec - elapsed);
+        state.elapsedSec = elapsed;
+
+        updateTimerDisplay();
+
+        if (state.remainingSec <= 0) {
+          triggerTimeOver();
+        }
+      }, 100);
+    }
   }
 
   function launchMissionGame() {
@@ -1170,9 +1215,23 @@
   // [랭킹 시스템] Firestore DB 연동 및 리더보드 렌더링
   // ==========================================================================
   const rankingState = {
+    currentGameMode: "scale", // "scale" | "concentration"
     currentDiff: "standard",
     lastSubmittedId: null,
+    isAdminMode: false,
   };
+
+  function getCurrentGameMode() {
+    const concContainer = document.getElementById("concentrationGameContainer");
+    if (concContainer && !concContainer.classList.contains("hidden")) {
+      return "concentration";
+    }
+    const btnConc = document.getElementById("btnModeConcentration");
+    if (btnConc && btnConc.classList.contains("active")) {
+      return "concentration";
+    }
+    return "scale";
+  }
 
   function escapeHtml(str) {
     return String(str)
@@ -1195,11 +1254,63 @@
     }
   }
 
-  async function openRankingModal(diff = state.difficulty) {
-    rankingState.currentDiff = diff;
+  async function openRankingModal(diff = undefined, gameMode = undefined) {
     pauseTimer();
 
-    // 탭 선택 상태 동기화
+    // 1. 게임 모드 결정 (미지정 시 현재 활성 게임 감지)
+    if (!gameMode) {
+      gameMode = getCurrentGameMode();
+    }
+    rankingState.currentGameMode = gameMode;
+
+    // 2. 난이도 결정 (미지정 시 해당 게임의 현재 난이도 감지)
+    if (!diff) {
+      if (gameMode === "concentration" && window.concentrationGameInstance) {
+        diff = window.concentrationGameInstance.difficulty || "standard";
+      } else {
+        diff = state.difficulty || "standard";
+      }
+    }
+    rankingState.currentDiff = diff;
+
+    // 3. 게임 선택 탭 활성화 상태 UI 동기화
+    if (el.btnRankGameScale && el.btnRankGameConc) {
+      const isScale = rankingState.currentGameMode === "scale";
+      el.btnRankGameScale.classList.toggle("active", isScale);
+      el.btnRankGameConc.classList.toggle("active", !isScale);
+    }
+
+    // 4. 모달 제목, 부제목, 조작 컬럼 헤더, 난이도 라벨 동적 변경
+    const isConc = rankingState.currentGameMode === "concentration";
+    if (el.rankingModalTitle) {
+      el.rankingModalTitle.textContent = isConc
+        ? "🧪 특제 설탕물 연구소 명예의 전당"
+        : "⚖️ 설탕 배달 명예의 전당";
+    }
+    if (el.rankingSubDesc) {
+      el.rankingSubDesc.textContent = isConc
+        ? "농도 맞추기(곱셈·나눗셈) 5문제 챌린지 실시간 랭킹 (점수 높은 순)"
+        : "등식의 성질 5문제 챌린지 실시간 랭킹 (점수 높은 순)";
+    }
+    if (el.rankingStepsTh) {
+      el.rankingStepsTh.textContent = isConc ? "조작 횟수" : "조작 단계";
+    }
+    if (el.rankTabBasic) {
+      el.rankTabBasic.textContent = "🌟 기초 (40초)";
+    }
+    if (el.rankTabStandard) {
+      el.rankTabStandard.textContent = isConc ? "⚡ 표준 (1분)" : "⚡ 기본 (1분)";
+    }
+    if (el.rankTabChallenge) {
+      el.rankTabChallenge.textContent = "🔥 심화 (1분 20초)";
+    }
+    if (el.btnPlayFromRanking) {
+      el.btnPlayFromRanking.textContent = isConc
+        ? "🧪 설탕물 만들기 도전!"
+        : "🚀 설탕 배달 도전!";
+    }
+
+    // 5. 난이도 탭 선택 상태 동기화
     el.rankingTabs.forEach((tab) => {
       const isAct = tab.dataset.rankDiff === rankingState.currentDiff;
       tab.classList.toggle("active", isAct);
@@ -1208,27 +1319,34 @@
 
     updateCloudStatusPill();
     openModal("rankingModal");
-    await renderRankingTable(rankingState.currentDiff);
+    await renderRankingTable(rankingState.currentDiff, rankingState.currentGameMode);
   }
 
-  async function renderRankingTable(diff) {
+  async function renderRankingTable(diff, gameMode = rankingState.currentGameMode) {
     if (!el.rankingTableBody) return;
+
+    const gameLabel = gameMode === "concentration" ? "설탕물 만들기" : "설탕 배달";
+    const colCount = rankingState.isAdminMode ? 8 : 7;
+
+    if (el.rankingAdminTh) {
+      el.rankingAdminTh.classList.toggle("hidden", !rankingState.isAdminMode);
+    }
 
     el.rankingTableBody.innerHTML = `
       <tr>
-        <td colspan="6" style="padding:26px;color:var(--text-muted);font-weight:600;">
-          ⏳ 랭킹 기록을 불러오는 중입니다...
+        <td colspan="${colCount}" style="padding:26px;color:var(--text-muted);font-weight:600;">
+          ⏳ [${gameLabel}] 랭킹 기록을 불러오는 중입니다...
         </td>
       </tr>
     `;
 
     try {
-      const list = await window.SugarRanking.getLeaderboard(diff);
+      const list = await window.SugarRanking.getLeaderboard(diff, gameMode);
       if (!list || list.length === 0) {
         el.rankingTableBody.innerHTML = `
           <tr>
-            <td colspan="6" style="padding:32px;color:var(--text-muted);">
-              아직 등록된 랭킹 기록이 없습니다. 지금 첫 번째 명예의 전당 주인공이 되어보세요!
+            <td colspan="${colCount}" style="padding:32px;color:var(--text-muted);">
+              아직 등록된 [${gameLabel}] 랭킹 기록이 없습니다. 지금 첫 번째 명예의 전당 주인공이 되어보세요!
             </td>
           </tr>
         `;
@@ -1267,6 +1385,17 @@
           const scoreVal = entry.score ?? 0;
           const correctVal = entry.correctCount ?? 5;
           const timeVal = (entry.totalSolveTimeSec ?? entry.solveTimeSec ?? 0).toFixed(1);
+          const stepsVal = entry.totalSteps != null
+            ? (gameMode === "concentration" ? `${entry.totalSteps}회` : `${entry.totalSteps}단계`)
+            : "-";
+
+          const adminActionTd = rankingState.isAdminMode
+            ? `<td>
+                <button type="button" class="btn-rank-delete" data-id="${entry.id}" data-nick="${escapeHtml(entry.nickname)}" style="background:#fee2e2; color:#b91c1c; border:1px solid #fca5a5; padding:3px 8px; border-radius:6px; font-size:11px; font-weight:800; cursor:pointer;" title="이 학생 기록 삭제">
+                  🗑️ 삭제
+                </button>
+               </td>`
+            : "";
 
           return `
             <tr class="${rowClass}">
@@ -1275,15 +1404,35 @@
               <td><span class="ranking-score-cell">🪙 ${scoreVal}점</span></td>
               <td><b>${correctVal} / 5</b></td>
               <td><small>${timeVal}초</small></td>
+              <td><span class="ranking-steps-cell" style="font-weight:700;color:#2563eb;">${stepsVal}</span></td>
               <td><small style="color:var(--text-muted);">${dateStr}</small></td>
+              ${adminActionTd}
             </tr>
           `;
         })
         .join("");
+
+      // 진행자 관리자 삭제 버튼 이벤트 바인딩
+      if (rankingState.isAdminMode) {
+        el.rankingTableBody.querySelectorAll(".btn-rank-delete").forEach((btn) => {
+          btn.addEventListener("click", async (e) => {
+            e.stopPropagation();
+            const id = btn.dataset.id;
+            const nick = btn.dataset.nick;
+            if (window.confirm(`⚠️ [진행자 관리 권한]\n'${nick}' 학생의 기록을 순위표에서 즉시 영구 삭제할까요?`)) {
+              btn.disabled = true;
+              btn.textContent = "삭제 중...";
+              await window.SugarRanking.deleteScore(id, gameMode, diff);
+              renderRankingTable(diff, gameMode);
+            }
+          });
+        });
+      }
     } catch (err) {
+      console.error("랭킹 렌더링 에러:", err);
       el.rankingTableBody.innerHTML = `
         <tr>
-          <td colspan="6" style="padding:22px;color:#dc2626;font-weight:700;">
+          <td colspan="${colCount}" style="padding:22px;color:#dc2626;font-weight:700;">
             ⚠️ 랭킹 목록을 불러오는 도중 오류가 발생했습니다. 잠시 후 새로고침해 주세요.
           </td>
         </tr>
@@ -1909,6 +2058,11 @@
         challenge: "심화 단계 (1분 20초)",
       };
 
+      const titleEl = document.getElementById("stageClearModalTitle");
+      const subtitleEl = document.querySelector("#stageClearModal .stage-clear-subtitle");
+      if (titleEl) titleEl.textContent = "스테이지 5문제 배달 완주!";
+      if (subtitleEl) subtitleEl.textContent = "등식의 성질을 활용해 지훈이의 설탕 배달 5문제를 모두 마쳤습니다!";
+
       if (el.stageFinalScore) {
         el.stageFinalScore.textContent = `${state.currentScore}점`;
       }
@@ -2048,7 +2202,10 @@
           el.stageRankSubmitForm.classList.add("hidden");
           el.stageRankSubmitResult.className = "rank-submit-result success";
           if (el.stageRankSuccessMsg) {
-            el.stageRankSuccessMsg.innerHTML = `🎉 <b>${escapeHtml(nickname)}</b>님의 점수(<b>${state.currentScore}점</b>)가 명예의 전당에 실시간 등록되었습니다!`;
+            const finalRegisteredScore = (state.lastCompletedStageEntry && state.lastCompletedStageEntry.score != null)
+              ? state.lastCompletedStageEntry.score
+              : state.currentScore;
+            el.stageRankSuccessMsg.innerHTML = `🎉 <b>${escapeHtml(nickname)}</b>님의 점수(<b>${finalRegisteredScore}점</b>)가 명예의 전당에 실시간 등록되었습니다!`;
           }
           el.stageRankSubmitResult.classList.remove("hidden");
         } else {
@@ -2061,33 +2218,60 @@
 
     if (el.btnViewLeaderboardAfterSubmit) {
       el.btnViewLeaderboardAfterSubmit.addEventListener("click", () => {
-        openRankingModal(state.difficulty);
+        closeModal("stageClearModal");
+        const gameMode = (state.lastCompletedStageEntry && state.lastCompletedStageEntry.gameMode) || getCurrentGameMode();
+        const diff = (state.lastCompletedStageEntry && state.lastCompletedStageEntry.difficulty) || state.difficulty;
+        openRankingModal(diff, gameMode);
       });
     }
 
     if (el.btnOpenLeaderboardFromClear) {
       el.btnOpenLeaderboardFromClear.addEventListener("click", () => {
-        openRankingModal(state.difficulty);
+        closeModal("stageClearModal");
+        const gameMode = (state.lastCompletedStageEntry && state.lastCompletedStageEntry.gameMode) || getCurrentGameMode();
+        const diff = (state.lastCompletedStageEntry && state.lastCompletedStageEntry.difficulty) || state.difficulty;
+        openRankingModal(diff, gameMode);
       });
     }
 
     if (el.btnRestartStage) {
       el.btnRestartStage.addEventListener("click", () => {
         closeModal("stageClearModal");
-        startStage(state.difficulty);
+        if (state.lastCompletedStageEntry && state.lastCompletedStageEntry.gameMode === "concentration") {
+          if (window.concentrationGameInstance) {
+            window.concentrationGameInstance.restartStage();
+          }
+        } else {
+          startStage(state.difficulty);
+        }
       });
     }
 
-    // 🏆 랭킹 모달 열기 버튼
+    // 🏆 랭킹 모달 열기 버튼 (헤더 및 채점 모달)
     if (el.btnOpenRanking) {
       el.btnOpenRanking.addEventListener("click", () => {
-        openRankingModal(state.difficulty);
+        openRankingModal(undefined, getCurrentGameMode());
       });
     }
 
     if (el.btnOpenRankingFromGrading) {
       el.btnOpenRankingFromGrading.addEventListener("click", () => {
-        openRankingModal(state.difficulty);
+        openRankingModal(state.difficulty, "scale");
+      });
+    }
+
+    // 🏆 순위표 게임 선택 탭 (설탕 배달 vs 설탕물 만들기 분리)
+    if (el.btnRankGameScale) {
+      el.btnRankGameScale.addEventListener("click", () => {
+        sfx.click();
+        openRankingModal(rankingState.currentDiff, "scale");
+      });
+    }
+
+    if (el.btnRankGameConc) {
+      el.btnRankGameConc.addEventListener("click", () => {
+        sfx.click();
+        openRankingModal(rankingState.currentDiff, "concentration");
       });
     }
 
@@ -2095,6 +2279,7 @@
     if (el.rankingTabs) {
       el.rankingTabs.forEach((tab) => {
         tab.addEventListener("click", () => {
+          sfx.click();
           const targetDiff = tab.dataset.rankDiff;
           rankingState.currentDiff = targetDiff;
           el.rankingTabs.forEach((t) => {
@@ -2102,7 +2287,7 @@
             t.classList.toggle("active", isAct);
             t.setAttribute("aria-selected", isAct ? "true" : "false");
           });
-          renderRankingTable(targetDiff);
+          renderRankingTable(targetDiff, rankingState.currentGameMode);
         });
       });
     }
@@ -2110,14 +2295,51 @@
     // 🏆 랭킹보드 새로고침
     if (el.btnRefreshRanking) {
       el.btnRefreshRanking.addEventListener("click", () => {
-        renderRankingTable(rankingState.currentDiff);
+        sfx.click();
+        renderRankingTable(rankingState.currentDiff, rankingState.currentGameMode);
+      });
+    }
+
+    // 🔒 진행자 관리자 모드 (비정상 닉네임 삭제)
+    if (el.btnAdminMode) {
+      el.btnAdminMode.addEventListener("click", () => {
+        sfx.click();
+        if (rankingState.isAdminMode) {
+          rankingState.isAdminMode = false;
+          el.btnAdminMode.textContent = "🔒 관리자";
+          el.btnAdminMode.style.color = "";
+          el.btnAdminMode.style.fontWeight = "";
+          renderRankingTable(rankingState.currentDiff, rankingState.currentGameMode);
+        } else {
+          const pw = window.prompt("진행자(선생님) 관리자 비밀번호를 입력해 주세요:");
+          if (pw === "balancemath0112") {
+            rankingState.isAdminMode = true;
+            el.btnAdminMode.textContent = "🔓 관리자 ON";
+            el.btnAdminMode.style.color = "#dc2626";
+            el.btnAdminMode.style.fontWeight = "800";
+            renderRankingTable(rankingState.currentDiff, rankingState.currentGameMode);
+          } else if (pw !== null) {
+            alert("비밀번호가 올바르지 않습니다.");
+          }
+        }
       });
     }
 
     if (el.btnPlayFromRanking) {
       el.btnPlayFromRanking.addEventListener("click", () => {
         closeModal("rankingModal");
-        resumeTimer();
+        if (rankingState.currentGameMode === "concentration") {
+          if (window.concentrationGameInstance) {
+            window.concentrationGameInstance.switchMode("concentration", false);
+            window.concentrationGameInstance.setDifficulty(rankingState.currentDiff);
+            window.concentrationGameInstance.restartStage();
+          }
+        } else {
+          if (window.concentrationGameInstance) {
+            window.concentrationGameInstance.switchMode("scale", false);
+          }
+          startStage(rankingState.currentDiff);
+        }
       });
     }
 
@@ -2213,10 +2435,44 @@
 
   function init() {
     bindEvents();
-    startNewProblem();
 
-    // 첫 진입 시 미션 모달 열기 (타이머는 출발하기 누르기 전까지 대기)
-    openModal("missionModal");
+    // 외부 연동용 객체 노출
+    window.scaleGame = {
+      start: (showModal = true) => {
+        startNewProblem();
+        if (showModal) {
+          openModal("missionModal");
+        }
+      },
+      stop: () => {
+        pauseTimer();
+      },
+      setLastCompletedStageEntry: (entry) => {
+        state.lastCompletedStageEntry = entry;
+        state.currentScore = entry.score;
+      },
+      openModal: (modalId) => {
+        openModal(modalId);
+      },
+      closeModal: (modalId) => {
+        closeModal(modalId);
+      },
+      openRankingModal: (diff, gameMode) => {
+        openRankingModal(diff, gameMode);
+      }
+    };
+
+    const urlParams = new URLSearchParams(window.location.search);
+    const isConcentrationMode = urlParams.get("mode") === "concentration";
+
+    if (isConcentrationMode) {
+      // 설탕물 농도 모드로 진입 시 타이머 일시정지 대기
+      pauseTimer();
+    } else {
+      // 기본값: 첫 번째 게임인 설탕 장수 배달 게임 시작 & 설명 모달 팝업
+      startNewProblem();
+      openModal("missionModal");
+    }
   }
 
   init();

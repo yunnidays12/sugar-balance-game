@@ -18,31 +18,58 @@
     measurementId: "G-S5426W0FKD",
   };
 
-  const MOCK_STORAGE_KEY = "sugar_merchant_mock_leaderboard_v2";
+  const MOCK_STORAGE_KEY = "sugar_merchant_mock_leaderboard_v3";
 
-  // 기본 샘플 명예의 전당 랭커 데이터 (점수제 기반)
+  // 기본 샘플 명예의 전당 랭커 데이터 (설탕 배달 vs 설탕물 만들기 분리)
   const DEFAULT_MOCK_DATA = {
-    basic: [
-      { id: "m1", nickname: "빛의지훈", score: 960, correctCount: 5, totalQuestions: 5, totalSolveTimeSec: 24.5, totalSteps: 10, createdAt: Date.now() - 86400000 * 2 },
-      { id: "m2", nickname: "등식의달인", score: 890, correctCount: 5, totalQuestions: 5, totalSolveTimeSec: 36.2, totalSteps: 11, createdAt: Date.now() - 86400000 },
-      { id: "m3", nickname: "번개어깨", score: 810, correctCount: 4, totalQuestions: 5, totalSolveTimeSec: 42.1, totalSteps: 13, createdAt: Date.now() - 3600000 * 5 },
-      { id: "m4", nickname: "수학꿈나무", score: 720, correctCount: 4, totalQuestions: 5, totalSolveTimeSec: 58.0, totalSteps: 15, createdAt: Date.now() - 3600000 * 2 },
-      { id: "m5", nickname: "달콤설탕", score: 610, correctCount: 3, totalQuestions: 5, totalSolveTimeSec: 65.4, totalSteps: 16, createdAt: Date.now() - 3600000 },
-    ],
-    standard: [
-      { id: "m6", nickname: "황금저울수호자", score: 940, correctCount: 5, totalQuestions: 5, totalSolveTimeSec: 42.8, totalSteps: 14, createdAt: Date.now() - 86400000 * 3 },
-      { id: "m7", nickname: "방정식마스터", score: 865, correctCount: 5, totalQuestions: 5, totalSolveTimeSec: 58.4, totalSteps: 15, createdAt: Date.now() - 86400000 },
-      { id: "m8", nickname: "설탕특공대", score: 780, correctCount: 4, totalQuestions: 5, totalSolveTimeSec: 69.2, totalSteps: 18, createdAt: Date.now() - 3600000 * 6 },
-      { id: "m9", nickname: "균형천재", score: 690, correctCount: 4, totalQuestions: 5, totalSolveTimeSec: 85.0, totalSteps: 20, createdAt: Date.now() - 3600000 * 3 },
-      { id: "m10", nickname: "포대계산기", score: 580, correctCount: 3, totalQuestions: 5, totalSolveTimeSec: 92.5, totalSteps: 22, createdAt: Date.now() - 1800000 },
-    ],
-    challenge: [
-      { id: "m11", nickname: "수학올림피아드", score: 920, correctCount: 5, totalQuestions: 5, totalSolveTimeSec: 78.5, totalSteps: 18, createdAt: Date.now() - 86400000 * 4 },
-      { id: "m12", nickname: "알고리즘신", score: 840, correctCount: 5, totalQuestions: 5, totalSolveTimeSec: 96.0, totalSteps: 21, createdAt: Date.now() - 86400000 * 2 },
-      { id: "m13", nickname: "지게마스터", score: 750, correctCount: 4, totalQuestions: 5, totalSolveTimeSec: 112.4, totalSteps: 24, createdAt: Date.now() - 3600000 * 8 },
-      { id: "m14", nickname: "설탕장인", score: 640, correctCount: 4, totalQuestions: 5, totalSolveTimeSec: 135.0, totalSteps: 27, createdAt: Date.now() - 3600000 * 4 },
-      { id: "m15", nickname: "방정식탐험가", score: 510, correctCount: 3, totalQuestions: 5, totalSolveTimeSec: 150.2, totalSteps: 29, createdAt: Date.now() - 1200000 },
-    ],
+    // ⚖️ 설탕 배달 (어깨 저울 모드)
+    scale: {
+      basic: [
+        { id: "s_b1", nickname: "빛의지훈", score: 960, correctCount: 5, totalQuestions: 5, totalSolveTimeSec: 24.5, totalSteps: 10, gameMode: "scale", createdAt: Date.now() - 86400000 * 2 },
+        { id: "s_b2", nickname: "등식의달인", score: 890, correctCount: 5, totalQuestions: 5, totalSolveTimeSec: 36.2, totalSteps: 11, gameMode: "scale", createdAt: Date.now() - 86400000 },
+        { id: "s_b3", nickname: "번개어깨", score: 810, correctCount: 4, totalQuestions: 5, totalSolveTimeSec: 42.1, totalSteps: 13, gameMode: "scale", createdAt: Date.now() - 3600000 * 5 },
+        { id: "s_b4", nickname: "수학꿈나무", score: 720, correctCount: 4, totalQuestions: 5, totalSolveTimeSec: 58.0, totalSteps: 15, gameMode: "scale", createdAt: Date.now() - 3600000 * 2 },
+        { id: "s_b5", nickname: "달콤설탕", score: 610, correctCount: 3, totalQuestions: 5, totalSolveTimeSec: 65.4, totalSteps: 16, gameMode: "scale", createdAt: Date.now() - 3600000 },
+      ],
+      standard: [
+        { id: "s_s1", nickname: "황금저울수호자", score: 940, correctCount: 5, totalQuestions: 5, totalSolveTimeSec: 42.8, totalSteps: 14, gameMode: "scale", createdAt: Date.now() - 86400000 * 3 },
+        { id: "s_s2", nickname: "방정식마스터", score: 865, correctCount: 5, totalQuestions: 5, totalSolveTimeSec: 58.4, totalSteps: 15, gameMode: "scale", createdAt: Date.now() - 86400000 },
+        { id: "s_s3", nickname: "설탕특공대", score: 780, correctCount: 4, totalQuestions: 5, totalSolveTimeSec: 69.2, totalSteps: 18, gameMode: "scale", createdAt: Date.now() - 3600000 * 6 },
+        { id: "s_s4", nickname: "균형천재", score: 690, correctCount: 4, totalQuestions: 5, totalSolveTimeSec: 85.0, totalSteps: 20, gameMode: "scale", createdAt: Date.now() - 3600000 * 3 },
+        { id: "s_s5", nickname: "포대계산기", score: 580, correctCount: 3, totalQuestions: 5, totalSolveTimeSec: 92.5, totalSteps: 22, gameMode: "scale", createdAt: Date.now() - 1800000 },
+      ],
+      challenge: [
+        { id: "s_c1", nickname: "수학올림피아드", score: 920, correctCount: 5, totalQuestions: 5, totalSolveTimeSec: 78.5, totalSteps: 18, gameMode: "scale", createdAt: Date.now() - 86400000 * 4 },
+        { id: "s_c2", nickname: "알고리즘신", score: 840, correctCount: 5, totalQuestions: 5, totalSolveTimeSec: 96.0, totalSteps: 21, gameMode: "scale", createdAt: Date.now() - 86400000 * 2 },
+        { id: "s_c3", nickname: "지게마스터", score: 750, correctCount: 4, totalQuestions: 5, totalSolveTimeSec: 112.4, totalSteps: 24, gameMode: "scale", createdAt: Date.now() - 3600000 * 8 },
+        { id: "s_c4", nickname: "설탕장인", score: 640, correctCount: 4, totalQuestions: 5, totalSolveTimeSec: 135.0, totalSteps: 27, gameMode: "scale", createdAt: Date.now() - 3600000 * 4 },
+        { id: "s_c5", nickname: "방정식탐험가", score: 510, correctCount: 3, totalQuestions: 5, totalSolveTimeSec: 150.2, totalSteps: 29, gameMode: "scale", createdAt: Date.now() - 1200000 },
+      ],
+    },
+    // 🧪 설탕물 만들기 (특제 설탕물 연구소 모드)
+    concentration: {
+      basic: [
+        { id: "c_b1", nickname: "달콤시럽마스터", score: 975, correctCount: 5, totalQuestions: 5, totalSolveTimeSec: 21.3, totalSteps: 6, gameMode: "concentration", createdAt: Date.now() - 86400000 * 2 },
+        { id: "c_b2", nickname: "농도박사", score: 910, correctCount: 5, totalQuestions: 5, totalSolveTimeSec: 32.0, totalSteps: 8, gameMode: "concentration", createdAt: Date.now() - 86400000 },
+        { id: "c_b3", nickname: "황금비율장인", score: 835, correctCount: 5, totalQuestions: 5, totalSolveTimeSec: 41.5, totalSteps: 9, gameMode: "concentration", createdAt: Date.now() - 3600000 * 4 },
+        { id: "c_b4", nickname: "설탕요정", score: 750, correctCount: 4, totalQuestions: 5, totalSolveTimeSec: 50.2, totalSteps: 11, gameMode: "concentration", createdAt: Date.now() - 3600000 * 2 },
+        { id: "c_b5", nickname: "물조절달인", score: 640, correctCount: 3, totalQuestions: 5, totalSolveTimeSec: 62.1, totalSteps: 14, gameMode: "concentration", createdAt: Date.now() - 3600000 },
+      ],
+      standard: [
+        { id: "c_s1", nickname: "굴절계의신", score: 955, correctCount: 5, totalQuestions: 5, totalSolveTimeSec: 35.8, totalSteps: 8, gameMode: "concentration", createdAt: Date.now() - 86400000 * 3 },
+        { id: "c_s2", nickname: "비율의지배자", score: 885, correctCount: 5, totalQuestions: 5, totalSolveTimeSec: 48.2, totalSteps: 10, gameMode: "concentration", createdAt: Date.now() - 86400000 },
+        { id: "c_s3", nickname: "특제연구원", score: 810, correctCount: 4, totalQuestions: 5, totalSolveTimeSec: 63.4, totalSteps: 12, gameMode: "concentration", createdAt: Date.now() - 3600000 * 5 },
+        { id: "c_s4", nickname: "달콤비커", score: 720, correctCount: 4, totalQuestions: 5, totalSolveTimeSec: 75.0, totalSteps: 15, gameMode: "concentration", createdAt: Date.now() - 3600000 * 2 },
+        { id: "c_s5", nickname: "스포이트장인", score: 590, correctCount: 3, totalQuestions: 5, totalSolveTimeSec: 88.6, totalSteps: 18, gameMode: "concentration", createdAt: Date.now() - 1800000 },
+      ],
+      challenge: [
+        { id: "c_c1", nickname: "퍼펙트농도", score: 930, correctCount: 5, totalQuestions: 5, totalSolveTimeSec: 68.4, totalSteps: 12, gameMode: "concentration", createdAt: Date.now() - 86400000 * 4 },
+        { id: "c_c2", nickname: "등식의마법사", score: 855, correctCount: 5, totalQuestions: 5, totalSolveTimeSec: 85.0, totalSteps: 15, gameMode: "concentration", createdAt: Date.now() - 86400000 * 2 },
+        { id: "c_c3", nickname: "황금레시피수호자", score: 760, correctCount: 4, totalQuestions: 5, totalSolveTimeSec: 104.2, totalSteps: 18, gameMode: "concentration", createdAt: Date.now() - 3600000 * 7 },
+        { id: "c_c4", nickname: "비율계산기", score: 660, correctCount: 4, totalQuestions: 5, totalSolveTimeSec: 122.5, totalSteps: 22, gameMode: "concentration", createdAt: Date.now() - 3600000 * 3 },
+        { id: "c_c5", nickname: "설탕물탐험가", score: 530, correctCount: 3, totalQuestions: 5, totalSolveTimeSec: 142.0, totalSteps: 25, gameMode: "concentration", createdAt: Date.now() - 1200000 },
+      ],
+    },
   };
 
   let firestoreDb = null;
@@ -80,7 +107,17 @@
         localStorage.setItem(MOCK_STORAGE_KEY, JSON.stringify(DEFAULT_MOCK_DATA));
         return JSON.parse(JSON.stringify(DEFAULT_MOCK_DATA));
       }
-      return JSON.parse(raw);
+      const parsed = JSON.parse(raw);
+      // 기존 v2 단일 데이터 구조 호환성 처리
+      if (!parsed.scale && !parsed.concentration) {
+        const migrated = {
+          scale: parsed,
+          concentration: DEFAULT_MOCK_DATA.concentration,
+        };
+        localStorage.setItem(MOCK_STORAGE_KEY, JSON.stringify(migrated));
+        return migrated;
+      }
+      return parsed;
     } catch {
       return JSON.parse(JSON.stringify(DEFAULT_MOCK_DATA));
     }
@@ -103,11 +140,12 @@
       return isCloudReady && firestoreDb !== null;
     },
 
-    // 랭킹 목록 가져오기 (난이도별 TOP 20)
-    async getLeaderboard(difficulty = "standard") {
+    // 랭킹 목록 가져오기 (게임 모드 및 난이도별 TOP 20)
+    async getLeaderboard(difficulty = "standard", gameMode = "scale") {
+      const targetMode = gameMode === "concentration" ? "concentration" : "scale";
+
       if (this.isCloudConnected()) {
         try {
-          // 복합 색인(Index) 설정 번거로움 없이 즉시 작동하도록 난이도별 조회 후 클라이언트 정렬
           const snapshot = await firestoreDb
             .collection("leaderboard")
             .where("difficulty", "==", difficulty)
@@ -117,16 +155,20 @@
           const list = [];
           snapshot.forEach((doc) => {
             const data = doc.data();
-            list.push({
-              id: doc.id,
-              nickname: data.nickname || "익명",
-              score: Math.max(0, Math.round(Number(data.score) || 0)),
-              correctCount: Number(data.correctCount ?? 5),
-              totalQuestions: Number(data.totalQuestions ?? 5),
-              totalSolveTimeSec: Number(data.totalSolveTimeSec ?? data.solveTimeSec ?? 0),
-              totalSteps: Number(data.totalSteps ?? data.stepCount ?? 0),
-              createdAt: data.createdAt ? (data.createdAt.toMillis ? data.createdAt.toMillis() : data.createdAt) : Date.now(),
-            });
+            const docMode = data.gameMode || "scale";
+            if (docMode === targetMode) {
+              list.push({
+                id: doc.id,
+                nickname: data.nickname || "익명",
+                score: Math.max(0, Math.round(Number(data.score) || 0)),
+                correctCount: Number(data.correctCount ?? 5),
+                totalQuestions: Number(data.totalQuestions ?? 5),
+                totalSolveTimeSec: Number(data.totalSolveTimeSec ?? data.solveTimeSec ?? 0),
+                totalSteps: Number(data.totalSteps ?? data.stepCount ?? 0),
+                gameMode: docMode,
+                createdAt: data.createdAt ? (data.createdAt.toMillis ? data.createdAt.toMillis() : data.createdAt) : Date.now(),
+              });
+            }
           });
 
           // 1순위: 최종 점수 높은 순, 2순위: 총 소요 시간 빠른 순, 3순위: 조작 단계 적은 순
@@ -140,16 +182,18 @@
             return a.totalSteps - b.totalSteps;
           });
 
-          return list.slice(0, 20);
+          if (list.length > 0) {
+            return list.slice(0, 20);
+          }
         } catch (err) {
           console.warn("Firestore 조회 실패 (로컬 데이터로 대체):", err);
-          // 실패 시 로컬 데이터 fallback
         }
       }
 
       // 로컬/데모 데이터 반환
       const mock = loadLocalMockLeaderboard();
-      const list = mock[difficulty] || [];
+      const modeData = mock[targetMode] || DEFAULT_MOCK_DATA[targetMode] || {};
+      const list = modeData[difficulty] || [];
       return [...list].sort((a, b) => {
         if (b.score !== a.score) {
           return b.score - a.score;
@@ -163,9 +207,11 @@
 
     // 랭킹 점수 등록
     async submitScore(entry) {
+      const targetMode = entry.gameMode === "concentration" ? "concentration" : "scale";
       const sanitized = {
         nickname: String(entry.nickname || "설탕장수").trim().slice(0, 12),
         difficulty: entry.difficulty || "standard",
+        gameMode: targetMode,
         score: Math.max(0, Math.round(Number(entry.score) || 0)),
         correctCount: Math.min(5, Math.max(0, Number(entry.correctCount) || 0)),
         totalQuestions: 5,
@@ -188,18 +234,21 @@
 
       // 로컬/데모 저장소에 추가
       const mock = loadLocalMockLeaderboard();
-      if (!mock[sanitized.difficulty]) {
-        mock[sanitized.difficulty] = [];
+      if (!mock[targetMode]) {
+        mock[targetMode] = DEFAULT_MOCK_DATA[targetMode] || {};
+      }
+      if (!mock[targetMode][sanitized.difficulty]) {
+        mock[targetMode][sanitized.difficulty] = [];
       }
 
       const newId = "local_" + Date.now();
-      mock[sanitized.difficulty].push({
+      mock[targetMode][sanitized.difficulty].push({
         ...sanitized,
         id: newId,
       });
 
       // 정렬 후 상위 30개만 유지
-      mock[sanitized.difficulty].sort((a, b) => {
+      mock[targetMode][sanitized.difficulty].sort((a, b) => {
         if (b.score !== a.score) {
           return b.score - a.score;
         }
@@ -208,12 +257,36 @@
         }
         return a.totalSteps - b.totalSteps;
       });
-      if (mock[sanitized.difficulty].length > 30) {
-        mock[sanitized.difficulty].length = 30;
+      if (mock[targetMode][sanitized.difficulty].length > 30) {
+        mock[targetMode][sanitized.difficulty].length = 30;
       }
 
       saveLocalMockLeaderboard(mock);
       return { success: true, isCloud: false, id: newId };
+    },
+
+    // 랭킹 기록 삭제 (진행자/선생님 관리 기능)
+    async deleteScore(id, gameMode = "scale", difficulty = "standard") {
+      let isCloudSuccess = false;
+      if (this.isCloudConnected() && id && !String(id).startsWith("local_")) {
+        try {
+          await firestoreDb.collection("leaderboard").doc(id).delete();
+          isCloudSuccess = true;
+          console.log(`🗑️ [Firestore] 문서(${id})가 성공적으로 삭제되었습니다.`);
+        } catch (err) {
+          console.warn("Firestore 삭제 실패:", err);
+        }
+      }
+
+      // 로컬/데모 저장소에서도 동시 삭제
+      const mock = loadLocalMockLeaderboard();
+      const targetMode = gameMode === "concentration" ? "concentration" : "scale";
+      if (mock[targetMode] && mock[targetMode][difficulty]) {
+        mock[targetMode][difficulty] = mock[targetMode][difficulty].filter((item) => item.id !== id);
+        saveLocalMockLeaderboard(mock);
+      }
+
+      return { success: true, isCloud: isCloudSuccess };
     },
   };
 })();
