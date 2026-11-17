@@ -278,13 +278,6 @@
   align-items: center;
 }
 
-@media (max-width: 860px) {
-  .beaker-layout-row {
-    grid-template-columns: 1fr;
-    gap: 24px;
-  }
-}
-
 /* 개별 비커 스테이션 */
 .beaker-station {
   display: flex;
@@ -337,8 +330,9 @@
   width: 200px;
   height: 260px;
   display: flex;
-  justify-content: center;
-  align-items: flex-end;
+  flex-direction: column;
+  justify-content: flex-end;
+  align-items: center;
   margin: 10px 0 16px 0;
 }
 
@@ -717,12 +711,6 @@
   gap: 20px;
 }
 
-@media (max-width: 780px) {
-  .control-rows-container {
-    grid-template-columns: 1fr;
-  }
-}
-
 /* 물 / 설탕 조작 유닛 카드 */
 .ingredient-control-card {
   border: 1.5px solid #e2e8f0;
@@ -1019,4 +1007,352 @@
   font-size: 1.4rem;
   color: #10b981;
   font-weight: 900;
+}
+
+/* =========================================
+   📱 모바일 & 태블릿 한눈에 보기 (One-Glance) 반응형 최적화
+   ========================================= */
+@media (max-width: 860px) {
+  .beaker-layout-row {
+    grid-template-columns: 1fr 1fr;
+    gap: 12px;
+    align-items: stretch;
+  }
+
+  /* 중앙 농도 굴절계는 비커 바로 위 전체 폭에 가로 바 형태로 배치 */
+  .center-comparator {
+    grid-column: 1 / -1;
+    order: -1;
+    padding: 0;
+    gap: 4px;
+  }
+
+  .refractometer-meter {
+    width: 100%;
+    padding: 8px 12px;
+    gap: 6px;
+  }
+}
+
+@media (max-width: 640px) {
+  .app-mode-switcher {
+    max-width: 100%;
+    width: 100%;
+    padding: 4px;
+    gap: 4px;
+    margin-bottom: 2px;
+    border-radius: 14px;
+  }
+
+  .mode-switch-btn {
+    flex-direction: column;
+    gap: 2px;
+    padding: 6px 6px;
+    font-size: 12.5px;
+    border-radius: 10px;
+  }
+
+  .mode-switch-btn .mode-tag {
+    font-size: 9.5px;
+    padding: 1px 6px;
+  }
+
+  #concentrationGameContainer {
+    gap: 8px;
+  }
+
+  .conc-toolbar {
+    padding: 8px 10px;
+    gap: 7px;
+  }
+
+  .conc-mission-banner {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 4px;
+  }
+
+  .conc-badge {
+    font-size: 10.5px;
+    padding: 2px 7px;
+  }
+
+  .conc-goal-text {
+    font-size: 12.5px;
+    line-height: 1.38;
+  }
+
+  .conc-toolbar > div:last-child {
+    width: 100%;
+  }
+
+  .conc-toolbar > div:last-child .btn {
+    flex: 1;
+    padding: 6px 8px;
+    font-size: 12px;
+  }
+
+  .property-banner-card {
+    padding: 8px 10px;
+    gap: 7px;
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .property-icon-box {
+    display: none;
+  }
+
+  .property-title {
+    font-size: 11.5px;
+  }
+
+  .property-desc {
+    font-size: 11.5px;
+    line-height: 1.35;
+  }
+
+  .property-banner-card > div:last-child {
+    justify-content: space-between;
+    flex-wrap: wrap;
+    gap: 6px;
+  }
+
+  .property-formula-pill {
+    font-size: 11px;
+    padding: 4px 8px;
+    flex: 1;
+    min-width: 0;
+    justify-content: center;
+    text-align: center;
+    white-space: normal;
+    line-height: 1.3;
+  }
+
+  .btn-toggle-hint {
+    font-size: 11px;
+    padding: 5px 8px;
+  }
+
+  /* 비커 스테이지: 좌/우 비커 나란히 한눈에 배치 */
+  .beaker-arena-card {
+    padding: 10px 8px;
+    border-radius: 14px;
+  }
+
+  .beaker-arena-header {
+    margin-bottom: 8px;
+    padding-bottom: 6px;
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 5px;
+  }
+
+  .arena-title {
+    font-size: 13.5px;
+    gap: 5px;
+    flex-wrap: wrap;
+  }
+
+  .arena-title span {
+    font-size: 11px !important;
+  }
+
+  .beaker-layout-row {
+    gap: 8px;
+  }
+
+  .meter-header {
+    font-size: 11.5px;
+  }
+
+  .meter-scale-visual {
+    height: 16px;
+  }
+
+  .meter-status-pill {
+    font-size: 11.5px;
+    padding: 3px 8px;
+  }
+
+  .beaker-station {
+    padding: 8px 6px;
+    border-radius: 12px;
+  }
+
+  .beaker-badge-pill {
+    font-size: 10px;
+    padding: 3px 6px;
+    margin-bottom: 4px;
+    text-align: center;
+    line-height: 1.2;
+    max-width: 100%;
+  }
+
+  .beaker-visual-wrapper {
+    width: 102px;
+    height: 118px;
+    margin: 2px 0 8px 0;
+  }
+
+  .glass-beaker {
+    width: 84px;
+    height: 104px;
+    border-width: 3px;
+    border-radius: 0 0 14px 14px;
+  }
+
+  .glass-beaker::before {
+    left: -6px;
+    right: -6px;
+    height: 6px;
+  }
+
+  .glass-beaker::after {
+    left: -10px;
+    width: 10px;
+    height: 8px;
+    border-width: 3px;
+  }
+
+  .beaker-tick-layer {
+    top: 10px;
+    bottom: 10px;
+    width: 32px;
+    font-size: 8.5px;
+  }
+
+  .beaker-pedestal {
+    width: 96px;
+    height: 10px;
+  }
+
+  .beaker-pedestal::after {
+    width: 44px;
+    height: 3px;
+    top: 3px;
+  }
+
+  .beaker-data-card {
+    padding: 6px 7px;
+    gap: 3px;
+  }
+
+  .beaker-data-row {
+    font-size: 11px;
+  }
+
+  .beaker-data-value.conc-val {
+    font-size: 12.5px;
+  }
+
+  /* 하단 조작 패널: 물/설탕 나란히 한눈에 조작 */
+  .conc-control-deck {
+    padding: 10px 8px;
+    gap: 10px;
+    border-radius: 14px;
+  }
+
+  .deck-section-title {
+    font-size: 12.5px;
+    flex-wrap: wrap;
+    gap: 3px;
+  }
+
+  .control-rows-container {
+    grid-template-columns: 1fr 1fr;
+    gap: 7px;
+  }
+
+  .ingredient-control-card {
+    padding: 8px 6px;
+    gap: 7px;
+    border-radius: 10px;
+  }
+
+  .ing-name {
+    font-size: 12px;
+    gap: 3px;
+  }
+
+  .ing-current-val {
+    font-size: 14px;
+  }
+
+  .stepper-row {
+    gap: 5px;
+  }
+
+  .btn-step-main {
+    height: 38px;
+    font-size: 13px;
+    border-radius: 8px;
+  }
+
+  .quick-buttons-row {
+    gap: 3px;
+  }
+
+  .btn-quick {
+    padding: 6px 1px;
+    font-size: 10px;
+    letter-spacing: -0.04em;
+    white-space: nowrap;
+    border-radius: 6px;
+  }
+
+  .ratio-helper-row {
+    padding: 8px 10px;
+    gap: 6px;
+  }
+
+  .ratio-helper-label {
+    font-size: 11.5px;
+    flex-wrap: wrap;
+  }
+
+  .ratio-chip-group {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    width: 100%;
+    gap: 5px;
+  }
+
+  .btn-ratio-chip {
+    padding: 6px 4px;
+    font-size: 11px;
+    text-align: center;
+  }
+
+  .submit-action-row {
+    position: sticky;
+    bottom: 6px;
+    z-index: 30;
+  }
+
+  .btn-submit-solution {
+    height: 46px;
+    font-size: 14.5px;
+    box-shadow: 0 6px 18px rgba(5, 150, 105, 0.38);
+  }
+
+  /* 해설 모달 모바일 최적화 */
+  .exp-math-comparison {
+    gap: 6px;
+    padding: 8px;
+  }
+
+  .exp-math-val {
+    font-size: 13.5px;
+  }
+
+  .exp-math-arrow {
+    font-size: 17px;
+  }
+}
+
+@media (max-width: 355px) {
+  .control-rows-container {
+    grid-template-columns: 1fr;
+  }
 }
