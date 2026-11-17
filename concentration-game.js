@@ -441,6 +441,14 @@
       if (this.dom.btnConcModalClose) {
         this.dom.btnConcModalClose.addEventListener("click", () => {
           this.closeModal();
+          const isSuccess = this.dom.btnConcModalNext && this.dom.btnConcModalNext.dataset.success === "true";
+          const isTimeover = this.dom.btnConcModalNext && this.dom.btnConcModalNext.dataset.timeover === "true";
+          if (isSuccess || isTimeover) {
+            this.nextQuestion();
+          } else {
+            this.isSubmitting = false;
+            this.resumeTimer();
+          }
         });
       }
 
@@ -795,14 +803,35 @@
     }
 
     handleTimeover() {
+      if (this.isSubmitting) return;
+      this.isSubmitting = true;
       sfx.wrong();
-      // 시간 초과 시 30% 감점
+      // 시간 초과 시 30% 감점 및 소요 시간 누적
+      const beforeScore = this.score;
       this.score = Math.max(0, Math.round(this.score * 0.7));
+      const penalty = beforeScore - this.score;
+      this.totalSolveTimeSec += this.timeLimit;
+
+      const prob = this.currentProblem;
+      const penaltyText = penalty > 0 ? ` (현재 점수 30% 감점: <strong>-${penalty}점</strong>)` : "";
+      const timeoverNotice = `
+        <div style="background:#fef2f2; border:1px solid #fecaca; border-radius:10px; padding:12px 14px; margin-bottom:10px; color:#991b1b; font-size:0.93rem; line-height:1.5;">
+          ⏱️ 제한 시간(<strong>${this.timeLimit}초</strong>)이 초과되었습니다!${penaltyText}<br/>
+          아래 등식의 성질 해설을 확인한 뒤 다음 문제에 도전해 보세요.
+        </div>
+      `;
+      const explanationHtml = prob
+        ? `${timeoverNotice}${this.buildExplanationHtml(prob, false, 0, 0)}`
+        : timeoverNotice;
+
       this.showModal({
         isSuccess: false,
-        title: "⏱️ 시간 초과!",
-        message: "시간이 초과되었습니다! 등식의 성질을 천천히 복습하고 다시 도전해보세요.",
         isTimeover: true,
+        title: "⏱️ 시간 초과!",
+        html: explanationHtml,
+        btnNextText: this.currentQuestion < this.totalQuestions
+          ? `다음 문제 (${this.currentQuestion + 1}/${this.totalQuestions}) 풀기 ➔`
+          : "🏆 스테이지 완주 결과 보기",
       });
       this.render();
     }
@@ -1007,15 +1036,22 @@
         });
 
       } else {
+        this.pauseTimer();
         sfx.wrong();
         // 오답 시 10% 감점
         const penalty = Math.round(this.score * 0.1);
         this.score = Math.max(0, this.score - penalty);
 
-        const explanationHtml = this.buildExplanationHtml(prob, false, 0, 0);
+        const wrongNotice = `
+          <div style="background:#fff7ed; border:1px solid #fed7aa; border-radius:10px; padding:10px 14px; margin-bottom:10px; color:#9a3412; font-size:0.92rem; line-height:1.5;">
+            현재 만든 설탕물 농도는 <strong>${playerConc.toFixed(1)}%</strong>, 목표 농도는 <strong>${targetConc.toFixed(1)}%</strong>입니다.${penalty > 0 ? ` (오답 감점 -10%: <strong>-${penalty}점</strong>)` : ""}
+          </div>
+        `;
+        const explanationHtml = `${wrongNotice}${this.buildExplanationHtml(prob, false, 0, 0)}`;
 
         this.showModal({
           isSuccess: false,
+          isTimeover: false,
           title: "❌ 아쉬워요! 농도가 일치하지 않습니다",
           html: explanationHtml,
           btnNextText: "다시 도전하기 🔄",
@@ -1111,13 +1147,20 @@
       `;
     }
 
-    showModal({ isSuccess, title, html, btnNextText }) {
+    showModal({ isSuccess, title, html, message, btnNextText, isTimeover = false }) {
       if (!this.dom.concModal) return;
-      this.dom.concModalTitle.textContent = title;
-      this.dom.concModalBody.innerHTML = html;
+      this.dom.concModalTitle.textContent = title || "결과 안내";
+      const safeBody =
+        html !== undefined && html !== null
+          ? html
+          : message
+            ? `<p style="padding:12px; color:#334155; line-height:1.6;">${message}</p>`
+            : "";
+      this.dom.concModalBody.innerHTML = safeBody;
       if (this.dom.btnConcModalNext) {
         this.dom.btnConcModalNext.textContent = btnNextText || "확인";
         this.dom.btnConcModalNext.dataset.success = isSuccess ? "true" : "false";
+        this.dom.btnConcModalNext.dataset.timeover = isTimeover ? "true" : "false";
       }
       this.dom.concModal.classList.remove("hidden");
     }
@@ -1130,10 +1173,12 @@
 
     nextQuestion() {
       const isSuccess = this.dom.btnConcModalNext && this.dom.btnConcModalNext.dataset.success === "true";
+      const isTimeover = this.dom.btnConcModalNext && this.dom.btnConcModalNext.dataset.timeover === "true";
 
-      if (!isSuccess) {
-        // 오답인 경우 같은 문제 다시 풀기
+      if (!isSuccess && !isTimeover) {
+        // 오답인 경우 같은 문제 다시 풀기 (일시정지된 타이머 재개)
         this.isSubmitting = false;
+        this.resumeTimer();
         return;
       }
 
